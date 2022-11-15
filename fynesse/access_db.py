@@ -50,7 +50,8 @@ class DB_access:
      self.conn = conn
      self.conn.ping()
 
-  def select_top(self, table_name: str,  n: int = 5):
+
+  def _select_top(self, table_name: str,  n: int = 5):
       cur = self.conn.cursor()
       cur.execute(f'SELECT * FROM {table_name} LIMIT {n}')
 
@@ -59,19 +60,10 @@ class DB_access:
       return rows, column_names
 
 
-  def select_top_to_df(self, table_name: str,  n: int = 5):
-    rows, column_names = self.select_top(table_name, n)
+  def select_top(self, table_name: str,  n: int = 5) -> pd.DataFrame:
+    rows, column_names = self._select_top(table_name, n)
     df = pd.DataFrame.from_records(rows, columns=column_names)
     return df
-
-
-  def custom_simple_select(self, table, what_to_select="COUNT(*)"):
-    cur = self.conn.cursor()
-    cur.execute(f"""
-      SELECT {what_to_select} FROM {table}
-    """)
-    result = cur.fetchall()
-    return result
 
 
   def custom_query(self, query: str):
