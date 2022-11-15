@@ -1,5 +1,4 @@
 from .config import *
-from datasci_v2.fynesse.access_db import create_connection
 from pymysql.connections import Connection
 import pandas as pd
 from os import remove
