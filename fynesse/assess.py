@@ -1,6 +1,6 @@
 from .config import *
 
-import .access
+import datasci_v2.fynesse.access_db as access_db
 
 """These are the types of import we might expect in this file
 import pandas
@@ -15,7 +15,7 @@ import sklearn.feature_extraction"""
 
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
-    df = access.data()
+    df = access_db.data()
     raise NotImplementedError
 
 def query(data):
