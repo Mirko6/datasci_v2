@@ -7,6 +7,26 @@ from os import remove
 FIRST_YEAR_PP_DATA = 1995
 CURRENT_YEAR = 2022
 
+# general functions
+def upload_csv_to_aws(conn: Connection, table_name: str, file_name: str):
+  cur = conn.cursor()
+  query = f"""
+    LOAD DATA LOCAL INFILE '{file_name}' INTO TABLE {table_name}
+    FIELDS TERMINATED BY ',' 
+    LINES STARTING BY '' TERMINATED BY '\n'
+  """
+  cur.execute(query)
+  rows_affected=cur.rowcount
+  return rows_affected
+
+
+
+# priced paid data
+def get_data(year: int, part: int):
+  url = f"http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{year}-part{part}.csv"
+  df = pd.read_csv(url, header=None)
+  return df
+
 
 def create_table_and_upload_everything_for_priced_paid_data(
   conn: Connection,
@@ -22,54 +42,6 @@ def create_table_and_upload_everything_for_priced_paid_data(
   upload_datasets(conn, table_name, sample_table_name, first_year, current_year, sample_portion)
   upload_current_year_dataset(conn, table_name, sample_table_name, sample_portion, current_year)
 
-
-def drop_and_create_table_for_priced_paid_data(conn: Connection, table_name: str):
-  cur = conn.cursor()
-  query1 = f"DROP TABLE IF EXISTS `{table_name}`"
-  query2 = f"""
-    CREATE TABLE IF NOT EXISTS `{table_name}` (
-      `transaction_unique_identifier` tinytext COLLATE utf8_bin NOT NULL,
-      `price` int(10) unsigned NOT NULL,
-      `date_of_transfer` date NOT NULL,
-      `postcode` varchar(8) COLLATE utf8_bin NOT NULL,
-      `property_type` varchar(1) COLLATE utf8_bin NOT NULL,
-      `new_build_flag` varchar(1) COLLATE utf8_bin NOT NULL,
-      `tenure_type` varchar(1) COLLATE utf8_bin NOT NULL,
-      `primary_addressable_object_name` tinytext COLLATE utf8_bin NOT NULL,
-      `secondary_addressable_object_name` tinytext COLLATE utf8_bin NOT NULL,
-      `street` tinytext COLLATE utf8_bin NOT NULL,
-      `locality` tinytext COLLATE utf8_bin NOT NULL,
-      `town_city` tinytext COLLATE utf8_bin NOT NULL,
-      `district` tinytext COLLATE utf8_bin NOT NULL,
-      `county` tinytext COLLATE utf8_bin NOT NULL,
-      `ppd_category_type` varchar(2) COLLATE utf8_bin NOT NULL,
-      `record_status` varchar(2) COLLATE utf8_bin NOT NULL,
-      `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-      PRIMARY KEY (`db_id`)
-    ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
-  """
-  #INDEX (`postcode`) USING HASH,
-  #INDEX (`date_of_transfer`) USING HASH
-
-  cur.execute(query1)
-  cur.execute(query2)
-
-
-def upload_csv_to_aws(conn: Connection, table_name: str, file_name: str):
-  cur = conn.cursor()
-  query = f"""
-    LOAD DATA LOCAL INFILE '{file_name}' INTO TABLE {table_name}
-    FIELDS TERMINATED BY ',' 
-    LINES STARTING BY '' TERMINATED BY '\n'
-  """
-  cur.execute(query)
-  rows_affected=cur.rowcount
-  return rows_affected
-
-def get_data(year: int, part: int):
-  url = f"http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{year}-part{part}.csv"
-  df = pd.read_csv(url, header=None)
-  return df
 
 def upload_datasets(
     conn: Connection, 
@@ -114,3 +86,68 @@ def upload_current_year_dataset(conn, table_name="pp_data", sample_table_name="p
   remove(dataset_path)
   remove(sample_dataset_path)
   print(f"num_fetched_rows was {num_fetched}, num_uploaded_rows was {num_uploaded}")
+
+
+def drop_and_create_table_for_priced_paid_data(conn: Connection, table_name: str = 'pp_data'):
+  cur = conn.cursor()
+  query1 = f"DROP TABLE IF EXISTS `{table_name}`"
+  query2 = f"""
+    CREATE TABLE IF NOT EXISTS `{table_name}` (
+      `transaction_unique_identifier` tinytext COLLATE utf8_bin NOT NULL,
+      `price` int(10) unsigned NOT NULL,
+      `date_of_transfer` date NOT NULL,
+      `postcode` varchar(8) COLLATE utf8_bin NOT NULL,
+      `property_type` varchar(1) COLLATE utf8_bin NOT NULL,
+      `new_build_flag` varchar(1) COLLATE utf8_bin NOT NULL,
+      `tenure_type` varchar(1) COLLATE utf8_bin NOT NULL,
+      `primary_addressable_object_name` tinytext COLLATE utf8_bin NOT NULL,
+      `secondary_addressable_object_name` tinytext COLLATE utf8_bin NOT NULL,
+      `street` tinytext COLLATE utf8_bin NOT NULL,
+      `locality` tinytext COLLATE utf8_bin NOT NULL,
+      `town_city` tinytext COLLATE utf8_bin NOT NULL,
+      `district` tinytext COLLATE utf8_bin NOT NULL,
+      `county` tinytext COLLATE utf8_bin NOT NULL,
+      `ppd_category_type` varchar(2) COLLATE utf8_bin NOT NULL,
+      `record_status` varchar(2) COLLATE utf8_bin NOT NULL,
+      `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+      PRIMARY KEY (`db_id`)
+    ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
+  """
+  #INDEX (`postcode`) USING HASH,
+  #INDEX (`date_of_transfer`) USING HASH
+
+  cur.execute(query1)
+  cur.execute(query2)
+
+
+# postcode data
+def drop_and_create_table_for_postcode_data(conn: Connection, table_name: str = "postcode_data"):
+  cur = conn.cursor()
+  query1 = f"DROP TABLE IF EXISTS `{table_name}`"
+  query2 = f"""
+    CREATE TABLE IF NOT EXISTS `{table_name}` (
+        `postcode` varchar(8) COLLATE utf8_bin NOT NULL,
+        `status` enum('live','terminated') NOT NULL,
+        `usertype` enum('small', 'large') NOT NULL,
+        `easting` int unsigned,
+        `northing` int unsigned,
+        `positional_quality_indicator` int NOT NULL,
+        `country` enum('England', 'Wales', 'Scotland', 'Northern Ireland', 'Channel Islands', 'Isle of Man') NOT NULL,
+        `lattitude` decimal(11,8) NOT NULL,
+        `longitude` decimal(10,8) NOT NULL,
+        `postcode_no_space` tinytext COLLATE utf8_bin NOT NULL,
+        `postcode_fixed_width_seven` varchar(7) COLLATE utf8_bin NOT NULL,
+        `postcode_fixed_width_eight` varchar(8) COLLATE utf8_bin NOT NULL,
+        `postcode_area` varchar(2) COLLATE utf8_bin NOT NULL,
+        `postcode_district` varchar(4) COLLATE utf8_bin NOT NULL,
+        `postcode_sector` varchar(6) COLLATE utf8_bin NOT NULL,
+        `outcode` varchar(4) COLLATE utf8_bin NOT NULL,
+        `incode` varchar(3)  COLLATE utf8_bin NOT NULL,
+        `db_id` bigint(20) unsigned NOT NULL,
+        PRIMARY KEY (`db_id`)
+    ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
+  """
+  #INDEX (`postcode`) USING HASH
+
+  cur.execute(query1)
+  cur.execute(query2)
