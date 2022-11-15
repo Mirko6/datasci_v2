@@ -49,6 +49,9 @@ class DB_access:
   def __init__(self, conn: Connection) -> None:
      self.conn = conn
      self.conn.ping()
+     current_db = self.custom_query("SELECT database()")
+     tables = self.custom_query("SHOW TABLES")
+     print(f"you now have access to {current_db} with tables {tables}")
 
 
   def _select_top(self, table_name: str,  n: int = 5):
