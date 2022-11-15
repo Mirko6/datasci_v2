@@ -1,6 +1,6 @@
 from .config import *
 
-import datasci_v2.fynesse.access_db as access_db
+import access_db
 
 """These are the types of import we might expect in this file
 import pandas
