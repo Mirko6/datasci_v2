@@ -1,6 +1,6 @@
 from .config import *
 
-import access_db
+from . import access_db
 
 """These are the types of import we might expect in this file
 import pandas
