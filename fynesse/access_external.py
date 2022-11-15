@@ -16,11 +16,11 @@ def create_table_and_upload_everything_for_priced_paid_data(
   first_year: int = FIRST_YEAR_PP_DATA,
   current_year: int = CURRENT_YEAR,
 ):
-  #drop_and_create_table_for_priced_paid_data(conn, table_name)
+  drop_and_create_table_for_priced_paid_data(conn, table_name)
   drop_and_create_table_for_priced_paid_data(conn, sample_table_name)
 
   upload_datasets(conn, table_name, sample_table_name, first_year, current_year, sample_portion)
-  upload_current_year_dataset(conn, table_name, sample_table_name, sample_portion)
+  upload_current_year_dataset(conn, table_name, sample_table_name, sample_portion, current_year)
 
 
 def drop_and_create_table_for_priced_paid_data(conn: Connection, table_name: str):
@@ -87,14 +87,14 @@ def upload_datasets(
         df = get_data(year, part)
         num_fetched_rows.append(len(df))
         filename = f"price_paid_data_year_{year}_part_{part}.csv"
-        #df.to_csv(filename, header=False, index=False)
+        df.to_csv(filename, header=False, index=False)
         df.sample(frac=sample_portion).to_csv("sample_" + filename, header=False, index=False)
         print(f"uploading the data")
-        #num_uploaded_rows.append(
-            #upload_csv_to_aws(conn, table_name, filename)
-        #)
+        num_uploaded_rows.append(
+            upload_csv_to_aws(conn, table_name, filename)
+        )
         upload_csv_to_aws(conn, sample_table_name, "sample_" + filename)
-        #remove(filename) # so I don't store the data for longer than needed
+        remove(filename)
         remove("sample_" + filename)
     print(f"num_fetched_rows was {sum(num_fetched_rows)}, num_uploaded_rows was {sum(num_uploaded_rows)}")
 
@@ -103,14 +103,14 @@ def upload_current_year_dataset(conn, table_name="pp_data", sample_table_name="p
   print(f"fetching data from year: {current_year}")
   url = f"http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{current_year}.csv"
   df = pd.read_csv(url, header=None)
-  #num_fetched = len(df)
-  #dataset_path = f"price_paid_data_year_{CURRENT_YEAR}.csv"
+  num_fetched = len(df)
+  dataset_path = f"price_paid_data_year_{CURRENT_YEAR}.csv"
   sample_dataset_path = f"sample_price_paid_data_year_{CURRENT_YEAR}.csv"
-  #df.to_csv(dataset_path, header=False, index=False)
+  df.to_csv(dataset_path, header=False, index=False)
   df.sample(frac=sample_portion).to_csv(sample_dataset_path, header=False, index=False)
   print("uploading data")
-  #num_uploaded = upload_csv_to_aws(conn, table_name, dataset_path)
+  num_uploaded = upload_csv_to_aws(conn, table_name, dataset_path)
   upload_csv_to_aws(conn, sample_table_name, sample_dataset_path)
-  #remove(dataset_path)
-  remove(sample_dataset_path) 
-  #print(f"num_fetched_rows was {num_fetched}, num_uploaded_rows was {num_uploaded}")
+  remove(dataset_path)
+  remove(sample_dataset_path)
+  print(f"num_fetched_rows was {num_fetched}, num_uploaded_rows was {num_uploaded}")
