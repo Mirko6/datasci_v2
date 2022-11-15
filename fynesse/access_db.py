@@ -1,4 +1,5 @@
 from .config import *
+from pymysql.connections import Connection
 
 """These are the types of import we might expect in this file
 import httplib2
@@ -45,8 +46,8 @@ def create_connection(user, password, host, database, port=3306):
 
 
 class DB_access:
-  def __init__(self, user, password, host, database, port=3306) -> None:
-     self.conn = create_connection(user, password, host, database, port)
+  def __init__(self, conn: Connection) -> None:
+     self.conn = conn
      self.conn.ping()
 
   def select_top(self, table_name: str,  n: int = 5):

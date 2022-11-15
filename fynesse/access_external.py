@@ -81,22 +81,21 @@ def upload_datasets(
   ):
     num_fetched_rows = []
     num_uploaded_rows = []
-    data_folder = "data/"
     for year in range(year_from, year_to_excl):
       for part in [1, 2]:
         print(f"fetching data from year: {year}, part: {part}")
         df = get_data(year, part)
         num_fetched_rows.append(len(df))
         filename = f"price_paid_data_year_{year}_part_{part}.csv"
-        #df.to_csv(data_folder + filename, header=False, index=False)
-        df.sample(frac=sample_portion).to_csv(data_folder + "sample_" + filename, header=False, index=False)
+        #df.to_csv(filename, header=False, index=False)
+        df.sample(frac=sample_portion).to_csv("sample_" + filename, header=False, index=False)
         print(f"uploading the data")
         #num_uploaded_rows.append(
-            #upload_csv_to_aws(conn, table_name, data_folder + filename)
+            #upload_csv_to_aws(conn, table_name, filename)
         #)
-        upload_csv_to_aws(conn, sample_table_name, data_folder + "sample_" + filename)
-        #remove(data_folder + filename) # so I don't store the data for longer than needed
-        remove(data_folder + "sample_" + filename)
+        upload_csv_to_aws(conn, sample_table_name, "sample_" + filename)
+        #remove(filename) # so I don't store the data for longer than needed
+        remove("sample_" + filename)
     print(f"num_fetched_rows was {sum(num_fetched_rows)}, num_uploaded_rows was {sum(num_uploaded_rows)}")
 
 
@@ -104,8 +103,8 @@ def upload_current_year_dataset(conn, table_name="pp_data", sample_table_name="p
   url = f"http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{CURRENT_YEAR}.csv"
   df = pd.read_csv(url, header=None)
   #num_fetched = len(df)
-  #dataset_path = f"data/price_paid_data_year_{CURRENT_YEAR}.csv"
-  sample_dataset_path = f"data/sample_price_paid_data_year_{CURRENT_YEAR}.csv"
+  #dataset_path = f"price_paid_data_year_{CURRENT_YEAR}.csv"
+  sample_dataset_path = f"sample_price_paid_data_year_{CURRENT_YEAR}.csv"
   #df.to_csv(dataset_path, header=False, index=False)
   df.sample(frac=sample_portion).to_csv(sample_dataset_path, header=False, index=False)
   #num_uploaded = upload_csv_to_aws(conn, table_name, dataset_path)
