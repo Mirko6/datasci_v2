@@ -99,14 +99,16 @@ def upload_datasets(
     print(f"num_fetched_rows was {sum(num_fetched_rows)}, num_uploaded_rows was {sum(num_uploaded_rows)}")
 
 
-def upload_current_year_dataset(conn, table_name="pp_data", sample_table_name="pp_data_sample", sample_portion=0.01):
-  url = f"http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{CURRENT_YEAR}.csv"
+def upload_current_year_dataset(conn, table_name="pp_data", sample_table_name="pp_data_sample", sample_portion=0.01, current_year=CURRENT_YEAR):
+  print(f"fetching data from year: {current_year}")
+  url = f"http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{current_year}.csv"
   df = pd.read_csv(url, header=None)
   #num_fetched = len(df)
   #dataset_path = f"price_paid_data_year_{CURRENT_YEAR}.csv"
   sample_dataset_path = f"sample_price_paid_data_year_{CURRENT_YEAR}.csv"
   #df.to_csv(dataset_path, header=False, index=False)
   df.sample(frac=sample_portion).to_csv(sample_dataset_path, header=False, index=False)
+  print("uploading data")
   #num_uploaded = upload_csv_to_aws(conn, table_name, dataset_path)
   upload_csv_to_aws(conn, sample_table_name, sample_dataset_path)
   #remove(dataset_path)
