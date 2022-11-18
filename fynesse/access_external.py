@@ -1,3 +1,4 @@
+from typing import Optional
 from .config import *
 from pymysql.connections import Connection
 import pandas as pd
@@ -19,6 +20,16 @@ def upload_csv_to_aws(conn: Connection, table_name: str, file_name: str):
   rows_affected=cur.rowcount
   return rows_affected
 
+
+def create_index_using_hash_if_not_exists(conn: Connection, table_name: str, index_col: str, index_name: Optional[str] = None):
+  if index_name is None:
+    index_name = table_name + "." + index_col
+  cur = conn.cursor()
+  query = f"""
+    CREATE INDEX IF NOT EXISTS `{index_name}` 
+    USING HASH ON `{table_name}` ({index_col})
+  """
+  cur.execute(query)
 
 
 # priced paid data
