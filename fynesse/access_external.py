@@ -143,7 +143,7 @@ def drop_and_create_table_for_postcode_data(conn: Connection, table_name: str = 
         `postcode_sector` varchar(6) COLLATE utf8_bin NOT NULL,
         `outcode` varchar(4) COLLATE utf8_bin NOT NULL,
         `incode` varchar(3)  COLLATE utf8_bin NOT NULL,
-        `db_id` bigint(20) unsigned NOT NULL,
+        `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
         PRIMARY KEY (`db_id`)
     ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
   """
