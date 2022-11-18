@@ -76,9 +76,9 @@ class DB_access:
     return result
 
 
-def custom_select_query(self, query: str) -> pd.DataFrame:
-    cur = self.conn.cursor()
-    cur.execute(query)
-    rows = cur.fetchall()
-    column_names = [i[0] for i in cur.description]
-    return pd.DataFrame.from_records(rows, columns=column_names)
+  def custom_select_query(self, query: str) -> pd.DataFrame:
+      cur = self.conn.cursor()
+      cur.execute(query)
+      rows = cur.fetchall()
+      column_names = [i[0] for i in cur.description]
+      return pd.DataFrame.from_records(rows, columns=column_names)
