@@ -1,3 +1,4 @@
+from typing import Optional
 from .config import *
 from pymysql.connections import Connection
 
@@ -79,6 +80,26 @@ class DB:
   def custom_select_query(self, query: str) -> pd.DataFrame:
     cur = self.conn.cursor()
     cur.execute(query)
+    rows = cur.fetchall()
+    column_names = [i[0] for i in cur.description]
+    return pd.DataFrame.from_records(rows, columns=column_names)
+
+
+  def select_priced_paid_data_joined_on_postcode(
+    self,
+    date_from_incl: str, #yyyy/mm/dd
+    date_to_excl: Optional[str] = None,
+    table_name_priced_paid_data: str = "pp_data",
+    table_name_postcode_data: str = "postcode",
+  ):
+    cur = self.conn.cursor()
+    cur.execute(f"""
+      SELECT price, date_of_transfer, property_type, tenure_type, new_building_flag, locality, town_city, longitude, lattitude, {table_name_priced_paid_data}.postcode FROM {table_name_priced_paid_data}
+      JOIN {table_name_postcode_data} ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
+      WHERE {date_from_incl} <= prices.date_of_transfer 
+      {'AND prices.date_of_transfer < ' + date_to_excl if date_to_excl is not None else ''}
+      AND postcode.status='live'
+    """)
     rows = cur.fetchall()
     column_names = [i[0] for i in cur.description]
     return pd.DataFrame.from_records(rows, columns=column_names)
