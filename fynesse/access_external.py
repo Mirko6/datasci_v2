@@ -3,6 +3,9 @@ from .config import *
 from pymysql.connections import Connection
 import pandas as pd
 from os import remove
+from requests import get
+from zipfile import ZipFile
+from io import BytesIO
 
 
 FIRST_YEAR_PP_DATA = 1995
@@ -162,3 +165,19 @@ def drop_and_create_table_for_postcode_data(conn: Connection, table_name: str = 
 
   cur.execute(query1)
   cur.execute(query2)
+
+
+def fetch_and_upload_postcode_data(conn: Connection, table_name = 'postcode_data'):
+  url = "https://www.getthedata.com/downloads/open_postcode_geo.csv.zip"
+  r = get(url)
+  z = ZipFile(BytesIO(r.content))
+  z.extract("open_postcode_geo.csv")
+  z.extract("licence.txt")
+  with open("licence.txt") as f:
+    print("licence of the postcode data:")
+    print(f.read())
+  remove("licence.txt")
+  upload_csv_to_aws(conn, table_name, 'open_postcode_geo.csv')
+  remove("open_postcode_geo.csv")
+
+
