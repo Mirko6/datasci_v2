@@ -90,11 +90,11 @@ class DB:
     date_from_incl: str, #yyyy/mm/dd
     date_to_excl: Optional[str] = None,
     table_name_priced_paid_data: str = "pp_data",
-    table_name_postcode_data: str = "postcode",
+    table_name_postcode_data: str = "postcode_data",
   ):
     cur = self.conn.cursor()
     cur.execute(f"""
-      SELECT price, date_of_transfer, property_type, tenure_type, new_building_flag, locality, town_city, longitude, lattitude, {table_name_priced_paid_data}.postcode FROM {table_name_priced_paid_data}
+      SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, locality, town_city, longitude, lattitude, {table_name_priced_paid_data}.postcode FROM {table_name_priced_paid_data}
       JOIN {table_name_postcode_data} ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
       WHERE {date_from_incl} <= prices.date_of_transfer 
       {'AND prices.date_of_transfer < ' + date_to_excl if date_to_excl is not None else ''}
