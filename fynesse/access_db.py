@@ -96,9 +96,9 @@ class DB:
     cur.execute(f"""
       SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, locality, town_city, longitude, lattitude, {table_name_priced_paid_data}.postcode FROM {table_name_priced_paid_data}
       JOIN {table_name_postcode_data} ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
-      WHERE {date_from_incl} <= prices.date_of_transfer 
-      {'AND prices.date_of_transfer < ' + date_to_excl if date_to_excl is not None else ''}
-      AND postcode.status='live'
+      WHERE {date_from_incl} <= date_of_transfer 
+      {'AND date_of_transfer < ' + date_to_excl if date_to_excl is not None else ''}
+      AND status = 'live'
     """)
     rows = cur.fetchall()
     column_names = [i[0] for i in cur.description]
