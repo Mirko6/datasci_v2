@@ -8,6 +8,16 @@ import tables
 import mongodb
 import sqlite"""
 
+
+PRICE_PAID_DATA_USEFUL_COLUMNS = [
+  "price", "date_of_transfer", "postcode", "property_type"
+]
+POSTCODE_DATA_USEFUL_COLUMNS = [
+  "postcode", "lattitude", "longitude", "status"
+]
+PRICE_POSTCODE_USEFUL_COLUMNS = list(set(PRICE_PAID_DATA_USEFUL_COLUMNS + POSTCODE_DATA_USEFUL_COLUMNS))
+
+
 # This file accesses the data
 
 """Place commands in this file to access the data electronically. Don't remove any missing values, or deal with outliers. Make sure you have legalities correct, both intellectual property and personal data privacy rights. Beyond the legal side also think about the ethical issues around this data. """
