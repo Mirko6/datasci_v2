@@ -92,14 +92,14 @@ class DB:
     table_name_priced_paid_data: str = "pp_data",
     table_name_postcode_data: str = "postcode_data",
   ):
-    cur = self.conn.cursor()
-    cur.execute(f"""
+    if date_to_excl is not None:
+      date_to_excl = "'" + date_to_excl + "'"
+    query = f"""
       SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, locality, town_city, longitude, lattitude, {table_name_priced_paid_data}.postcode FROM {table_name_priced_paid_data}
-      JOIN {table_name_postcode_data} ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
-      WHERE {date_from_incl} <= date_of_transfer 
-      {'AND date_of_transfer < ' + date_to_excl if date_to_excl is not None else ''}
-      AND status = 'live'
-    """)
-    rows = cur.fetchall()
-    column_names = [i[0] for i in cur.description]
-    return pd.DataFrame.from_records(rows, columns=column_names)
+        JOIN {table_name_postcode_data} 
+          ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
+       WHERE '{date_from_incl}' <= date_of_transfer 
+             {'AND date_of_transfer < ' + date_to_excl + '' if date_to_excl is not None else ''}
+               AND status = 'live'
+    """
+    return self.custom_select_query(query)
