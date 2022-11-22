@@ -108,7 +108,7 @@ class DB:
       postcode: Optional[str] = None,
       longitude: Optional[float] = None,
       lattitude: Optional[float] = None,
-      box_size: int = 0.01,
+      box_size: int = 0.01, #0.01 almost equals to 1.1km
     ):
       if date_from_incl is not None:
         date_from_incl = "'" + date_from_incl + "'"
@@ -120,7 +120,7 @@ class DB:
         postcode = "'" + postcode + "'"
       
       query = f"""
-        SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, locality, town_city, longitude, lattitude, {table_name_priced_paid_data}.postcode FROM {table_name_priced_paid_data}
+        SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, country, county, town_city, district, longitude, lattitude, {table_name_priced_paid_data}.postcode FROM {table_name_priced_paid_data}
           JOIN {table_name_postcode_data} 
             ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
          WHERE status = 'live'
