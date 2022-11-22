@@ -45,7 +45,7 @@ def create_connection(user, password, host, database, port=3306):
       return conn
 
 
-class DB_access:
+class DB:
   def __init__(self, conn: Connection) -> None:
      self.conn = conn
      self.conn.ping()
@@ -54,19 +54,9 @@ class DB_access:
      print(f"you now have access to database {current_db} with tables {', '.join(tables)}")
 
 
-  def _select_top(self, table_name: str,  n: int = 5):
-      cur = self.conn.cursor()
-      cur.execute(f'SELECT * FROM {table_name} LIMIT {n}')
-
-      rows = cur.fetchall()
-      column_names = [i[0] for i in cur.description]
-      return rows, column_names
-
-
   def select_top(self, table_name: str,  n: int = 5) -> pd.DataFrame:
-    rows, column_names = self._select_top(table_name, n)
-    df = pd.DataFrame.from_records(rows, columns=column_names)
-    return df
+    query = f'SELECT * FROM {table_name} LIMIT {n}'
+    return self.custom_select_query(query)
 
 
   def custom_query(self, query: str):
