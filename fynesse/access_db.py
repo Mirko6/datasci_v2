@@ -93,8 +93,8 @@ class DB:
       date_to_excl: Optional[str] = None, #yyyy/mm/dd
       town_city: Optional[str] = None,
       postcode: Optional[str] = None,
-      longitude: Optional[float] = None,
-      lattitude: Optional[float] = None,
+      longitude: Optional[str] = None,
+      lattitude: Optional[str] = None,
       box_size: int = 0.01, #0.01 almost equals to 1.1km
       only_live_postcodes : bool = True,
       property_type: Optional[str] = None,
@@ -109,9 +109,9 @@ class DB:
       if postcode is not None:
         filters.append(f"{table_name_priced_paid_data}.postcode = '{postcode}'")
       if longitude is not None:
-        filters.append(f"{longitude - box_size/2} < longitude AND longitude < {longitude + box_size/2}")
+        filters.append(f"{float(longitude) - box_size/2} < longitude AND longitude < {longitude + box_size/2}")
       if lattitude is not None:
-        filters.append(f"{lattitude - box_size/2} < lattitude AND lattitude < {lattitude + box_size/2}")
+        filters.append(f"{float(lattitude) - box_size/2} < lattitude AND lattitude < {lattitude + box_size/2}")
       if only_live_postcodes:
         filters.append("status = 'live'")
       if property_type is not None:
