@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from .config import *
 from pymysql.connections import Connection
 
@@ -62,7 +62,7 @@ class DB:
      self.conn.ping()
      current_db = self.custom_query("SELECT database()")[0][0]
      tables = (table[0] for table in self.custom_query("SHOW TABLES"))
-     print(f"you now have access to database {current_db} with tables {', '.join(tables)}")
+     print(f"you now have access to database: {current_db} with tables: {', '.join(tables)}")
 
 
   def select_top(self, table_name: str,  n: int = 5) -> pd.DataFrame:
@@ -85,49 +85,43 @@ class DB:
     return pd.DataFrame.from_records(rows, columns=column_names)
 
 
-  def _generate_additional_sql_contraints_on_coordinates(
-    self,
-    longitude: Optional[float] = None,
-    lattitude: Optional[float] = None,
-    box_size: int = 0.01,
-  ):
-    additional_constraints = ""
-    if longitude is not None:
-      additional_constraints += f" AND {longitude - box_size/2} < longitude AND longitude < {longitude + box_size/2}"
-    if lattitude is not None:
-      additional_constraints += f" AND {lattitude - box_size/2} < lattitude AND lattitude < {lattitude + box_size/2}"
-    return additional_constraints
-
   def select_priced_paid_data_joined_on_postcode(
       self,
-      date_from_incl: Optional[str] = None, #yyyy/mm/dd
-      date_to_excl: Optional[str] = None, #yyyy/mm/dd
       table_name_priced_paid_data: str = "pp_data",
       table_name_postcode_data: str = "postcode_data",
+      date_from_incl: Optional[str] = None, #yyyy/mm/dd
+      date_to_excl: Optional[str] = None, #yyyy/mm/dd
       town_city: Optional[str] = None,
       postcode: Optional[str] = None,
       longitude: Optional[float] = None,
       lattitude: Optional[float] = None,
       box_size: int = 0.01, #0.01 almost equals to 1.1km
+      only_live_postcodes : bool = True,
+      property_type: Optional[str] = None,
     ):
+      filters = []
       if date_from_incl is not None:
-        date_from_incl = "'" + date_from_incl + "'"
+        filters.append(f"'{date_from_incl}' <= date_of_transfer")
       if date_to_excl is not None:
-        date_to_excl = "'" + date_to_excl + "'"
+        filters.append(f"date_of_transfer < '{date_to_excl}'")
       if town_city is not None:
-        town_city = "'" + town_city + "'"
+        filters.append(f"town_city = '{town_city.upper()}'")
       if postcode is not None:
-        postcode = "'" + postcode + "'"
+        filters.append(f"{table_name_priced_paid_data}.postcode = '{postcode}'")
+      if longitude is not None:
+        filters.append(f"{longitude - box_size/2} < longitude AND longitude < {longitude + box_size/2}")
+      if lattitude is not None:
+        filters.append(f"{lattitude - box_size/2} < lattitude AND lattitude < {lattitude + box_size/2}")
+      if only_live_postcodes:
+        filters.append("status = 'live'")
+      if property_type is not None:
+        filters.append(f"property_type = '{property_type}'")
       
       query = f"""
         SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, country, county, town_city, district, longitude, lattitude, {table_name_priced_paid_data}.postcode FROM {table_name_priced_paid_data}
           JOIN {table_name_postcode_data} 
             ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
-         WHERE status = 'live'
-               {' AND ' + date_from_incl + ' <= date_of_transfer' if date_from_incl is not None else ''}
-               {' AND date_of_transfer < ' + date_to_excl + '' if date_to_excl is not None else ''}
-               {' AND town_city = ' + town_city.upper() if town_city is not None else ''}
-               {' AND ' + table_name_priced_paid_data + '.postcode = ' + postcode if postcode is not None else ''}
-               {self._generate_additional_sql_contraints_on_coordinates(float(longitude), float(lattitude), box_size)}
+         WHERE {' AND '.join(filters)}
       """
+      print(query)
       return self.custom_select_query(query)
