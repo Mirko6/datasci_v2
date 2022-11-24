@@ -120,7 +120,10 @@ class DB:
         filters.append(f"property_type = '{property_type}'")
       
       query = f"""
-        SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, country, county, town_city, district, longitude, lattitude, {table_name_priced_paid_data}.postcode FROM {table_name_priced_paid_data}
+        SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, 
+               country, county, town_city, district, longitude, lattitude, 
+               {table_name_priced_paid_data}.postcode, status AS postcode_status 
+          FROM {table_name_priced_paid_data}
           JOIN {table_name_postcode_data} 
             ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
          WHERE {' AND '.join(filters)}
