@@ -4,6 +4,7 @@ from . import access_db
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 """These are the types of import we might expect in this file
 import pandas
@@ -34,7 +35,7 @@ def labelled(data):
     raise NotImplementedError
 
 
-def filter_price_outliers(df, fraction_to_remove = 0.1):
+def filter_price_outliers(df: pd.DataFrame, fraction_to_remove = 0.1):
   print(f"Number of all houses: {len(df)}, price range: {df['price'].min()} - {df['price'].max()}")
   one_sided_outliers = fraction_to_remove / 2
   low_price = df['price'].quantile(one_sided_outliers, interpolation='nearest')
@@ -47,7 +48,7 @@ def filter_price_outliers(df, fraction_to_remove = 0.1):
   return df_filtered
 
 
-def plot_price_distribution(prices, bin_width = 100_000):
+def plot_price_distribution(prices: pd.Series, bin_width: int = 100_000, cmap: str = 'plasma'):
   bin_low = math.floor(prices.min() / bin_width) * bin_width
   bin_high = math.ceil(prices.max() / bin_width) * bin_width
 
@@ -59,7 +60,7 @@ def plot_price_distribution(prices, bin_width = 100_000):
   bin_centers = 0.5 * (bins[:-1] + bins[1:])
   col = bin_centers - min(bin_centers)
   col /= max(col)
-  color_map = plt.cm.get_cmap('plasma')
+  color_map = plt.cm.get_cmap(cmap)
   for c, p in zip(col, patches):
     plt.setp(p, 'facecolor', color_map(c))
 

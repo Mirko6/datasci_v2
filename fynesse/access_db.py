@@ -96,7 +96,7 @@ class DB:
       longitude: Optional[str] = None,
       lattitude: Optional[str] = None,
       box_size: int = 0.01, #0.01 almost equals to 1.1km
-      only_live_postcodes : bool = True,
+      only_live_postcodes : bool = False, # it is okay to include transactions associated with terminated postcodes
       property_type: Optional[str] = None,
     ):
       filters = []
