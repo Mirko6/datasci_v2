@@ -98,6 +98,7 @@ class DB:
       box_size: int = 0.01, #0.01 almost equals to 1.1km
       only_live_postcodes : bool = False, # it is okay to include transactions associated with terminated postcodes
       property_type: Optional[str] = None,
+      ppd_category_type: Optional[str] = 'A',
     ):
       filters = []
       if date_from_incl is not None:
@@ -118,11 +119,14 @@ class DB:
         filters.append("status = 'live'")
       if property_type is not None:
         filters.append(f"property_type = '{property_type}'")
+      if ppd_category_type is not None:
+        filters.append(f"ppd_category_type = '{ppd_category_type}'")
       
       query = f"""
         SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, 
                country, county, town_city, district, longitude, lattitude, 
-               {table_name_priced_paid_data}.postcode, status AS postcode_status 
+               {table_name_priced_paid_data}.postcode, status AS postcode_status,
+               ppd_category_type
           FROM {table_name_priced_paid_data}
           JOIN {table_name_postcode_data} 
             ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
