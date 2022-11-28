@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 from .config import *
 
 from . import access_db
@@ -77,6 +77,7 @@ def fetch_graph_from_df(df: pd.DataFrame) -> networkx.MultiDiGraph:
   return ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
 
 
+#TODO: maybe return just an axis?
 def plot_prices_on_map(df: pd.DataFrame, edges: gpd.GeoDataFrame):
   gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.lattitude))
   #fetching geographic data
@@ -92,3 +93,8 @@ def plot_prices_on_map(df: pd.DataFrame, edges: gpd.GeoDataFrame):
   ax.set_xlabel("longitude")
   ax.set_ylabel("latitude")
   gdf.sort_values(by=['price']).plot("price", ax=ax, legend=True, cmap='plasma', alpha=0.7, zorder=2) #use sort_values, so the lighter colors are drawn later
+  return fig, ax
+
+
+def get_bbox_from_df(df) -> Tuple[float, float, float, float]:
+  return df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max()
