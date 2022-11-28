@@ -5,6 +5,7 @@ from . import access_db
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 import pandas as pd
 import osmnx as ox
 import networkx
@@ -52,13 +53,12 @@ def filter_price_outliers(df: pd.DataFrame, fraction_to_remove = 0.1):
   return df_filtered
 
 
-def plot_price_distribution(prices: pd.Series, bin_width: int = 100_000, cmap: str = 'plasma'):
+def plot_price_distribution(prices: pd.Series, ax: Axes, bin_width: int = 100_000, cmap: str = 'plasma'):
   bin_low = math.floor(prices.min() / bin_width) * bin_width
   bin_high = math.ceil(prices.max() / bin_width) * bin_width
 
   bins = np.linspace(bin_low, bin_high, num = (bin_high - bin_low) // bin_width + 1)
   
-  fig, ax = plt.subplots(figsize=(12, 12))
   n, bins, patches = ax.hist(prices, bins=bins)
 
   #cmap scaling
@@ -73,15 +73,11 @@ def plot_price_distribution(prices: pd.Series, bin_width: int = 100_000, cmap: s
   ax.set_xlabel('Price')
   ax.set_title('Counts per price_level')
 
-  return fig, ax
-
-
 def fetch_graph_from_df(df: pd.DataFrame) -> networkx.MultiDiGraph:
   return ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
 
 
-#TODO: maybe return just an axis?
-def plot_prices_on_map(df: pd.DataFrame, edges: gpd.GeoDataFrame):
+def plot_prices_on_map(df: pd.DataFrame, edges: gpd.GeoDataFrame, ax: Axes) -> None:
   gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.lattitude))
   #fetching geographic data
   if edges is None:
@@ -89,14 +85,12 @@ def plot_prices_on_map(df: pd.DataFrame, edges: gpd.GeoDataFrame):
     nodes, edges = ox.graph_to_gdfs(graph)
 
   #plotting
-  fig, ax = plt.subplots(figsize=(12, 12))
   edges.plot(ax=ax, linewidth=1, edgecolor="dimgray", zorder=1)
   ax.set_xlim([df['longitude'].min(), df['longitude'].max()])
   ax.set_ylim([df['lattitude'].min(), df['lattitude'].max()])
   ax.set_xlabel("longitude")
   ax.set_ylabel("latitude")
   gdf.sort_values(by=['price']).plot("price", ax=ax, legend=True, cmap='plasma', alpha=0.7, zorder=2) #use sort_values, so the lighter colors are drawn later
-  return fig, ax
 
 
 def get_bbox_from_df(df) -> Tuple[float, float, float, float]:
