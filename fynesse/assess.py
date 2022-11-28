@@ -1,3 +1,4 @@
+from typing import Optional
 from .config import *
 
 from . import access_db
@@ -5,6 +6,9 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import osmnx as ox
+import networkx
+import geopandas as gpd
 
 """These are the types of import we might expect in this file
 import pandas
@@ -67,3 +71,24 @@ def plot_price_distribution(prices: pd.Series, bin_width: int = 100_000, cmap: s
   plt.ylabel('Count')
   plt.xlabel('Price')
   plt.title('Counts per price_level')
+
+
+def fetch_graph_from_df(df: pd.DataFrame) -> networkx.MultiDiGraph:
+  return ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
+
+
+def plot_prices_on_map(df: pd.DataFrame, graph: Optional[networkx.MultiDiGraph]):
+  #fetching geographic data
+  if graph is None:
+    graph = ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
+  nodes, edges = ox.graph_to_gdfs(graph)
+  gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.lattitude))
+
+  #plotting
+  fig, ax = plt.subplots(figsize=(12, 12))
+  edges.plot(ax=ax, linewidth=1, edgecolor="dimgray", zorder=1)
+  ax.set_xlim([df['longitude'].min(), df['longitude'].max()])
+  ax.set_ylim([df['lattitude'].min(), df['lattitude'].max()])
+  ax.set_xlabel("longitude")
+  ax.set_ylabel("latitude")
+  gdf.sort_values(by=['price']).plot("price", ax=ax, legend=True, cmap='plasma', alpha=0.7, zorder=2) #use sort_values, so the lighter colors are drawn later
