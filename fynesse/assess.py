@@ -58,7 +58,8 @@ def plot_price_distribution(prices: pd.Series, bin_width: int = 100_000, cmap: s
 
   bins = np.linspace(bin_low, bin_high, num = (bin_high - bin_low) // bin_width + 1)
   
-  n, bins, patches = plt.hist(prices, bins=bins)
+  fig, ax = plt.subplots(figsize=(12, 12))
+  n, bins, patches = ax.hist(prices, bins=bins)
 
   #cmap scaling
   bin_centers = 0.5 * (bins[:-1] + bins[1:])
@@ -68,9 +69,11 @@ def plot_price_distribution(prices: pd.Series, bin_width: int = 100_000, cmap: s
   for c, p in zip(col, patches):
     plt.setp(p, 'facecolor', color_map(c))
 
-  plt.ylabel('Count')
-  plt.xlabel('Price')
-  plt.title('Counts per price_level')
+  ax.set_ylabel('Count')
+  ax.set_xlabel('Price')
+  ax.set_title('Counts per price_level')
+
+  return fig, ax
 
 
 def fetch_graph_from_df(df: pd.DataFrame) -> networkx.MultiDiGraph:
