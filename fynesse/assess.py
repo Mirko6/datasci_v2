@@ -77,12 +77,12 @@ def fetch_graph_from_df(df: pd.DataFrame) -> networkx.MultiDiGraph:
   return ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
 
 
-def plot_prices_on_map(df: pd.DataFrame, graph: Optional[networkx.MultiDiGraph]):
-  #fetching geographic data
-  if graph is None:
-    graph = ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
-  nodes, edges = ox.graph_to_gdfs(graph)
+def plot_prices_on_map(df: pd.DataFrame, edges: gpd.GeoDataFrame):
   gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.lattitude))
+  #fetching geographic data
+  if edges is None:
+    graph = ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
+    nodes, edges = ox.graph_to_gdfs(graph)
 
   #plotting
   fig, ax = plt.subplots(figsize=(12, 12))
