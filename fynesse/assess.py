@@ -97,10 +97,10 @@ def plot_prices_on_map(df: pd.DataFrame, edges: gpd.GeoDataFrame, ax: Axes) -> N
 
 def get_bbox_from_df(df, delta_coordinates = 0.002) -> Tuple[float, float, float, float]:
   return (
-    df['lattitude'].min() - delta_coordinates, #north
-    df['lattitude'].max() + delta_coordinates, #south
-    df['longitude'].min() - delta_coordinates, #east
-    df['longitude'].max() + delta_coordinates  #west
+    float(df['lattitude'].min()) - delta_coordinates, #north
+    float(df['lattitude'].max()) + delta_coordinates, #south
+    float(df['longitude'].min()) - delta_coordinates, #east
+    float(df['longitude'].max()) + delta_coordinates  #west
   )
 
 
