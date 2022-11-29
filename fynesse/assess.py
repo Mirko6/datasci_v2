@@ -10,6 +10,7 @@ import pandas as pd
 import osmnx as ox
 import networkx
 import geopandas as gpd
+from shapely.geometry import Point
 
 """These are the types of import we might expect in this file
 import pandas
@@ -59,7 +60,7 @@ def plot_price_distribution(prices: pd.Series, ax: Axes, bin_width: int = 100_00
 
   bins = np.linspace(bin_low, bin_high, num = (bin_high - bin_low) // bin_width + 1)
   
-  n, bins, patches = ax.hist(prices, bins=bins)
+  _n, bins, patches = ax.hist(prices, bins=bins)
 
   #cmap scaling
   bin_centers = 0.5 * (bins[:-1] + bins[1:])
@@ -82,16 +83,26 @@ def plot_prices_on_map(df: pd.DataFrame, edges: gpd.GeoDataFrame, ax: Axes) -> N
   #fetching geographic data
   if edges is None:
     graph = ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
-    nodes, edges = ox.graph_to_gdfs(graph)
+    _nodes, edges = ox.graph_to_gdfs(graph)
 
   #plotting
   edges.plot(ax=ax, linewidth=1, edgecolor="dimgray", zorder=1)
-  ax.set_xlim([df['longitude'].min(), df['longitude'].max()])
-  ax.set_ylim([df['lattitude'].min(), df['lattitude'].max()])
+  north, south, east, west = get_bbox_from_df(df)
+  ax.set_xlim([east, west])
+  ax.set_ylim([north, south])
   ax.set_xlabel("longitude")
   ax.set_ylabel("latitude")
   gdf.sort_values(by=['price']).plot("price", ax=ax, legend=True, cmap='plasma', alpha=0.7, zorder=2) #use sort_values, so the lighter colors are drawn later
 
 
-def get_bbox_from_df(df) -> Tuple[float, float, float, float]:
-  return df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max()
+def get_bbox_from_df(df, delta_coordinates = 0.002) -> Tuple[float, float, float, float]:
+  return (
+    df['lattitude'].min() - delta_coordinates, #north
+    df['lattitude'].max() + delta_coordinates, #south
+    df['longitude'].min() - delta_coordinates, #east
+    df['longitude'].max() + delta_coordinates  #west
+  )
+
+
+def num_objects_within_d(object_geometries, d_within: float, point: Point):
+  return sum(object_geometries.apply(lambda geometry: geometry.distance(point) < d_within ))
