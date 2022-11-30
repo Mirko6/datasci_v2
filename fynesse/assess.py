@@ -143,7 +143,7 @@ def plot_prices_on_map(
     markersize_count_scaling_constant: float = 200,
     include_legend: bool = True,
     colormap = 'plasma',
-  ) -> gpd.DataFrame:
+  ) -> gpd.GeoDataFrame:
   df_by_postcode = (df.groupby(by='postcode')
             .aggregate({'price': 'mean', 'date_of_transfer': 'count', 'lattitude': 'median', 'longitude': 'median'})
             .rename(columns={'date_of_transfer':'count'}))
@@ -183,7 +183,7 @@ def plot_price_prediction_color_map(
   glm_result, 
   num_division_per_dimension: int = 150,
   include_legend: bool = True,
-  ):
+  ) -> gpd.GeoDataFrame:
   x = np.linspace(float(df_train['longitude'].min()), float(df_train['longitude'].max()), num_division_per_dimension)
   y = np.linspace(float(df_train['lattitude'].min()), float(df_train['lattitude'].max()), num_division_per_dimension)
   xx, yy = np.meshgrid(x, y)
