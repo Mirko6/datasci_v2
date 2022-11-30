@@ -134,3 +134,60 @@ class DB:
       """
       print(query)
       return self.custom_select_query(query)
+
+
+  def select_priced_paid_data_joined_on_postcode_faster_on_coordinates(
+      self,
+      longitude: str,
+      lattitude: str,
+      table_name_priced_paid_data: str = "pp_data",
+      table_name_postcode_data: str = "postcode_data",
+      date_from_incl: Optional[str] = None, #yyyy/mm/dd
+      date_to_excl: Optional[str] = None, #yyyy/mm/dd
+      town_city: Optional[str] = None,
+      postcode: Optional[str] = None,
+      box_size: int = 0.01, #0.01 almost equals to 1.1km
+      only_live_postcodes : bool = False, # it is okay to include transactions associated with terminated postcodes
+      property_type: Optional[str] = None,
+      ppd_category_type: Optional[str] = 'A',
+    ):
+      filters = []
+      if date_from_incl is not None:
+        filters.append(f"'{date_from_incl}' <= date_of_transfer")
+      if date_to_excl is not None:
+        filters.append(f"date_of_transfer < '{date_to_excl}'")
+      if town_city is not None:
+        filters.append(f"town_city = '{town_city.upper()}'")
+      if postcode is not None:
+        filters.append(f"{table_name_priced_paid_data}.postcode = '{postcode}'")
+      if only_live_postcodes:
+        filters.append("status = 'live'")
+      if property_type is not None:
+        filters.append(f"property_type = '{property_type}'")
+      if ppd_category_type is not None:
+        filters.append(f"ppd_category_type = '{ppd_category_type}'")
+      
+      select_applicable_postcodes = f"""
+        SELECT postcode 
+          FROM {table_name_postcode_data}
+         WHERE {longitude - box_size/2} < longitude AND
+               longitude < {longitude + box_size/2} AND
+               {lattitude - box_size/2} < lattitude AND
+               lattitude < {lattitude + box_size/2}
+      """
+      filters.append(
+        f"{table_name_priced_paid_data}.postcode IN ({select_applicable_postcodes})"
+      )
+
+      query = f"""
+        SELECT price, date_of_transfer, property_type, tenure_type, new_build_flag, 
+               country, county, town_city, district, longitude, lattitude, 
+               {table_name_priced_paid_data}.postcode, status AS postcode_status,
+               ppd_category_type
+          FROM {table_name_priced_paid_data}
+          JOIN {table_name_postcode_data} 
+            ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
+         WHERE {' AND '.join(filters)}
+      """
+      print(query)
+      return self.custom_select_query(query)

@@ -95,7 +95,7 @@ def plot_prices_on_map(df: pd.DataFrame, edges: gpd.GeoDataFrame, ax: Axes) -> N
   gdf.sort_values(by=['price']).plot("price", ax=ax, legend=True, cmap='plasma', alpha=0.7, zorder=2) #use sort_values, so the lighter colors are drawn later
 
 
-def get_bbox_from_df(df, delta_coordinates = 0.002) -> Tuple[float, float, float, float]:
+def get_bbox_from_df(df, delta_coordinates = 0.001) -> Tuple[float, float, float, float]:
   return (
     float(df['lattitude'].min()) - delta_coordinates, #north
     float(df['lattitude'].max()) + delta_coordinates, #south
