@@ -135,7 +135,7 @@ class DB:
       print(query)
       return self.custom_select_query(query)
 
-
+  #not really faster
   def select_priced_paid_data_joined_on_postcode_faster_on_coordinates(
       self,
       longitude: str,
@@ -167,6 +167,8 @@ class DB:
       if ppd_category_type is not None:
         filters.append(f"ppd_category_type = '{ppd_category_type}'")
       
+      longitude = float(longitude)
+      lattitude = float(lattitude)
       select_applicable_postcodes = f"""
         SELECT postcode 
           FROM {table_name_postcode_data}
