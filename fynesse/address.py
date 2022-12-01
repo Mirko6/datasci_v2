@@ -13,7 +13,7 @@ import networkx
 import geopandas as gpd
 from shapely.geometry import Point
 from statsmodels.genmod.generalized_linear_model import GLMResultsWrapper
-import statsmodels as sm
+import statsmodels.api as sm
 from datetime import date
 #pd.options.mode.chained_assignment = None
 
