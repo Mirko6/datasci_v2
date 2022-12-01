@@ -12,6 +12,10 @@ import osmnx as ox
 import networkx
 import geopandas as gpd
 from shapely.geometry import Point
+from statsmodels.genmod.generalized_linear_model import GLMResultsWrapper
+import statsmodels as sm
+from datetime import date
+#pd.options.mode.chained_assignment = None
 
 """# Here are some of the imports we might expect 
 import sklearn.model_selection  as ms
@@ -28,6 +32,61 @@ import tensorflow as tf
 import scipy.stats"""
 
 """Address a particular question that arises from the data"""
+
+def predict_price(
+    df: pd.DataFrame,
+    lattitude: str,
+    longitude: str,
+    predict_date: date,
+    prediction_features,
+  ) -> Tuple[gpd.GeoDataFrame, float, GLMResultsWrapper, pd.DataFrame]:
+    pois = None
+    df_design_GLM = df[['longitude', 'lattitude']].astype({'longitude': float, 'lattitude': float})
+    df_values_for_prediction = pd.DataFrame(data={'longitude': [float(longitude)], 'lattitude': [float(lattitude)]})
+    if prediction_features.get("constant"):
+      df_design_GLM['constant'] = 1
+      df_values_for_prediction['constant'] = 1
+    if prediction_features.get("new_build_flag") is not None:
+      df_design_GLM['new_build_flag'] = (df['new_build_flag'] == 'N').astype(int)
+      df_values_for_prediction['new_build_flag'] = int(prediction_features.get("new_build_flag"))
+    if prediction_features.get("days_since"):
+      if prediction_features.get("days_since") == "first_day":
+        df.loc[:, 'ordinal_date_value'] = df['date_of_transfer'].apply(lambda d: d.toordinal())
+        df.loc[:, 'days_since_first_day'] = df['ordinal_date_value'] - df['ordinal_date_value'].min()
+        df_design_GLM['days_since_first_day'] = df['days_since_first_day']
+        df_values_for_prediction['days_since_first_day'] = (predict_date - df['date_of_transfer'].min()).days
+      else:
+        year, month, day = (int(i) for i in prediction_features.get("days_since").split("/"))
+        date_since = date(year, month, day)
+        df.loc[:, 'ordinal_date_value'] = df['date_of_transfer'].apply(lambda d: d.toordinal())
+        df.loc[:, 'days_since_date'] = df['ordinal_date_value'] - date_since.toordinal()
+        df_design_GLM['days_since_date'] = df['days_since_date']
+        df_values_for_prediction['days_since_date'] = (predict_date - date_since).days    
+    if prediction_features.get("num_objects"):
+      d_within = prediction_features["num_objects"]["d_within"]
+      tags = prediction_features["num_objects"]["tags"]
+      pois = ox.geometries_from_bbox(get_bbox_from_df(df), tags)
+      df.loc[:, 'num_objects'] = df.apply(lambda row: num_objects_within_d(pois['geometry'], d_within, Point(row['longitude'], row['lattitude'])), axis = 1)
+      df_design_GLM['num_objects'] = df['num_objects']
+      df_values_for_prediction['num_objects'] = num_objects_within_d(pois['geometry'], d_within, Point(float(longitude), float(lattitude)))
+    if not prediction_features.get("longitude"):
+      df_design_GLM.drop(columns='longitude', inplace=True)
+      df_values_for_prediction.drop(columns='longitude', inplace=True)
+    if not prediction_features.get("lattitude"):
+      df_design_GLM.drop(columns = 'lattitude', inplace=True)
+      df_values_for_prediction.drop(columns='lattitude', inplace=True)
+
+    print(f"GLM uses the following features: {', '.join(df_design_GLM.columns)}")
+
+    glm = sm.GLM(df['price'], df_design_GLM)
+    glm_result = glm.fit()
+
+    prediction = glm_result.predict(df_values_for_prediction)[0]
+    std = math.sqrt(glm_result.scale)
+    print(f"Price prediction: {round(prediction)}£, std: {round(std)}, 95% confidence interval: {round(prediction - 2*std)}£ - {round(prediction + 2*std)}£")
+
+    return pois, prediction, glm_result, df_values_for_prediction
+
 
 def fetch_graph_from_df(df: pd.DataFrame) -> networkx.MultiDiGraph:
   return ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
@@ -55,14 +114,14 @@ def plot_price_distribution(
   prices: pd.Series,
   ax: Axes,
   bin_width: Optional[int] = None,
-  cmap: str = 'plasma'
+  cmap: str = 'plasma',
+  approximate_number_of_bins: float = 9, #used only when bin_width is None
+  bin_width_is_divisible_by: float = 20_000, #used only when bin_width is None
   ):
-  APPROXIMATE_NUMBER_OF_BINS = 7
-  BIN_WIDTH_IS_DIVISIBLE_BY = 25_000
   if bin_width is None:
     bin_width = _round_to_base(
-      (prices.max() - prices.min()) / APPROXIMATE_NUMBER_OF_BINS, 
-      BIN_WIDTH_IS_DIVISIBLE_BY
+      (prices.max() - prices.min()) / approximate_number_of_bins, 
+      bin_width_is_divisible_by
     )
 
   bin_low = math.floor(prices.min() / bin_width) * bin_width
@@ -130,7 +189,7 @@ def plot_price_prediction_color_map(
   df_train: pd.DataFrame, 
   ax_price_colormap: Axes,
   df_values_for_prediction: pd.DataFrame,
-  glm_result, 
+  glm_result: GLMResultsWrapper,
   num_division_per_dimension: int = 150,
   include_legend: bool = True,
   color_scale_based_on_df_train: bool = True,
@@ -145,6 +204,7 @@ def plot_price_prediction_color_map(
       # we want to keep constant all other features other than lattitude and longitude
       df_box_predictions[col_name] = df_values_for_prediction[col_name][0]
 
+  # predict prices from the glm_result for each row
   df_box_predictions['price'] = df_box_predictions.apply(
     lambda row: glm_result.predict(
         pd.DataFrame(row).transpose()[df_values_for_prediction.columns]
