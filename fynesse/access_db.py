@@ -132,7 +132,7 @@ class DB:
             ON {table_name_priced_paid_data}.postcode = {table_name_postcode_data}.postcode
          WHERE {' AND '.join(filters)}
       """
-      print(query)
+      print(f"the following query gets executed: {query}")
       return self.custom_select_query(query)
 
   #not really faster

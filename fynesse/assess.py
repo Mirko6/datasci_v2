@@ -60,7 +60,7 @@ def get_training_data(
   return df_all
 
 def filter_price_outliers(df: pd.DataFrame, fraction_to_remove = 0.1):
-  print(f"Number of all houses: {len(df)}, price range: {df['price'].min()} - {df['price'].max()}")
+  print(f"Number of houses before filtering: {len(df)}, price range: {df['price'].min()} - {df['price'].max()}")
   one_sided_outliers = fraction_to_remove / 2
   low_price = df['price'].quantile(one_sided_outliers, interpolation='nearest')
   high_price = df['price'].quantile(1 - one_sided_outliers, interpolation='nearest')
@@ -68,5 +68,5 @@ def filter_price_outliers(df: pd.DataFrame, fraction_to_remove = 0.1):
       (low_price <= df['price']) &
       (df['price'] <= high_price)
   ]
-  print(f"Number of houses without outliers: {len(df_filtered)}, price range: {df_filtered['price'].min()} - {df_filtered['price'].max()}")
+  print(f"Number of houses without price outliers: {len(df_filtered)}, price range: {df_filtered['price'].min()} - {df_filtered['price'].max()}")
   return df_filtered

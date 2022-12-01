@@ -133,6 +133,7 @@ def plot_price_prediction_color_map(
   num_division_per_dimension: int = 150,
   include_legend: bool = True,
   color_scale_based_on_df_train: bool = True,
+  cmap: str = 'plasma',
   ) -> gpd.GeoDataFrame:
   x = np.linspace(float(df_train['longitude'].min()), float(df_train['longitude'].max()), num_division_per_dimension)
   y = np.linspace(float(df_train['lattitude'].min()), float(df_train['lattitude'].max()), num_division_per_dimension)
@@ -146,5 +147,5 @@ def plot_price_prediction_color_map(
   gdf = gpd.GeoDataFrame(df_box_predictions, geometry=gpd.points_from_xy(df_box_predictions.longitude, df_box_predictions.lattitude))
   
   vmin, vmax = (df_train['price'].min(), df_train['price'].max()) if color_scale_based_on_df_train else (None, None)
-  gdf.plot('price', ax=ax_price_colormap, vmin=vmin, vmax=vmax, cmap='plasma', zorder=1, legend=include_legend)
+  gdf.plot('price', ax=ax_price_colormap, vmin=vmin, vmax=vmax, cmap=cmap, zorder=1, legend=include_legend)
   return gdf
