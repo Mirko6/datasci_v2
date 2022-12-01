@@ -73,11 +73,12 @@ class DB:
     the result as a DataFrame
 
   select_top(table_name, n):
-    Select top n elementas from table table_name and return
+    Select top n elements from table table_name and return
     the result as a DataFrame
 
   select_priced_paid_data_joined_on_postcode(**kwargs):
     Join and Select priced paid data table with postcode data allowing for many filters
+    Return the result as a DataFrame
   """
   def __init__(self, conn: Connection) -> None:
      self.conn = conn
@@ -111,34 +112,47 @@ class DB:
       self,
       table_name_priced_paid_data: str = "pp_data",
       table_name_postcode_data: str = "postcode_data",
-      date_from_incl: Optional[str] = None, #yyyy/mm/dd
-      date_to_excl: Optional[str] = None, #yyyy/mm/dd
+      date_from_incl: Optional[str] = None,
+      date_to_excl: Optional[str] = None,
       town_city: Optional[str] = None,
       postcode: Optional[str] = None,
       longitude: Optional[str] = None,
       lattitude: Optional[str] = None,
-      box_size: int = 0.01, #0.01 almost equals to 1.1km
-      only_live_postcodes : bool = False, # it is okay to include transactions associated with terminated postcodes
+      box_size: int = 0.01,
+      only_live_postcodes : bool = False,
       property_type: Optional[str] = None,
       ppd_category_type: Optional[str] = 'A',
       columns_to_select: List[str] = [
         "price", "date_of_transfer", "property_type", "tenure_type", "new_build_flag", "country", "county", "town_city", "district", "longitude", "lattitude", "postcode_status", "ppd_category_type"
       ]
     ) -> pd.DataFrame:
-      """Select Join and Select priced paid data table with postcode data allowing for many filters
+      """
+      Select Join and Select priced paid data table with postcode data allowing for many filters
 
       Args:
-          table_name_priced_paid_data (str, optional): name of the priced paid data table. Defaults to "pp_data".
-          table_name_postcode_data (str, optional): name of the postcode data table.. Defaults to "postcode_data".
-          date_from_incl (Optional[str], optional): lower bound filter on date. Defaults to None.
-          postcode (Optional[str], optional): postcode filter. Defaults to None.
-          longitude (Optional[str], optional): longitude coordinate of the center of a box. Defaults to None.
-          lattitude (Optional[str], optional): lattitude coordinate of the center of a box. Defaults to None.
-          box_size (int, optional): this will create filter for transactions ensuring they happened in a square of size box_size with centre in (longitude, lattitude). 
-            Defaults to 0.01. Which corresponds to 1.1km.
-          ppd_category_type (Optional[str], optional): ppd_category_type filter. Defaults to 'A'.
-          columns_to_select (List[str]): Columns to select in addition to postcode. 
-            Defaults to [price, date_of_transfer, property_type, tenure_type, new_build_flag, country, county, town_city, district, longitude, lattitude, postcode_status, ppd_category_type]
+          Specifying tables:
+            table_name_priced_paid_data: Defaults to "pp_data".
+            table_name_postcode_data: Defaults to "postcode_data".
+
+          Positional filters:
+            longitude: longitude coordinate of the center of a box.
+            lattitude: lattitude coordinate of the center of a box.
+            box_size: create a filter for transactions using a square of size box_size with centre in (longitude, lattitude). 
+                      Defaults to 0.01. Which corresponds to ~1.1km.
+
+          Additional filters:
+            date_from_incl: lower bound filter on date. Expected format is yyyy/mm/dd.
+            date_from_excl: upper bound filter on date. Expected format is yyyy/mm/dd.
+            town_city,
+            postcode,
+            only_live_postcodes: there are two values for postcode status - live and terminated.
+                                True will filter away terminated status. Default False.
+            ppd_category_type: Defaults to 'A'.
+
+          Other:
+            columns_to_select: Columns to select in addition to postcode. 
+                              Defaults to [price, date_of_transfer, property_type, tenure_type, new_build_flag, country, county,
+                                          town_city, district, longitude, lattitude, postcode_status, ppd_category_type]
 
       Returns:
           DataFrame with corresponding data
