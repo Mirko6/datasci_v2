@@ -42,6 +42,7 @@ def get_bbox_from_df(df, delta_coordinates = 0.001) -> Tuple[float, float, float
   )
 
 
+#brutforce implemntation - might make it faster if wanted, but since there is usually small number of geometries it is okay
 def num_objects_within_d(object_geometries, d_within: float, point: Point):
   return sum(object_geometries.apply(lambda geometry: geometry.distance(point) < d_within ))
 
@@ -139,11 +140,17 @@ def plot_price_prediction_color_map(
   y = np.linspace(float(df_train['lattitude'].min()), float(df_train['lattitude'].max()), num_division_per_dimension)
   xx, yy = np.meshgrid(x, y)
   df_box_predictions = pd.DataFrame({'longitude': xx.flatten(), 'lattitude': yy.flatten()})
-  prediction_cols = (x for x in df_values_for_prediction.columns if x not in ['lattitude', 'longitude'])
-  for col_name in prediction_cols:
-    df_box_predictions[col_name] = df_values_for_prediction[col_name][0]
-  
-  df_box_predictions['price'] = df_box_predictions.apply(lambda row: glm_result.predict(pd.DataFrame(row).transpose()).iloc[0], axis=1)
+  for col_name in df_values_for_prediction.columns:
+    if col_name not in ['lattitude', 'longitude']:
+      # we want to keep constant all other features other than lattitude and longitude
+      df_box_predictions[col_name] = df_values_for_prediction[col_name][0]
+
+  df_box_predictions['price'] = df_box_predictions.apply(
+    lambda row: glm_result.predict(
+        pd.DataFrame(row).transpose()[df_values_for_prediction.columns]
+      ).iloc[0],
+    axis=1
+  )
   gdf = gpd.GeoDataFrame(df_box_predictions, geometry=gpd.points_from_xy(df_box_predictions.longitude, df_box_predictions.lattitude))
   
   vmin, vmax = (df_train['price'].min(), df_train['price'].max()) if color_scale_based_on_df_train else (None, None)
