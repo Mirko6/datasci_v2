@@ -130,29 +130,29 @@ class DB:
       Select Join and Select priced paid data table with postcode data allowing for many filters
 
       Args:
-          Specifying tables:
-            table_name_priced_paid_data: Defaults to "pp_data".
-            table_name_postcode_data: Defaults to "postcode_data".
+        Specifying tables args:
+          table_name_priced_paid_data: Defaults to "pp_data".
+          table_name_postcode_data: Defaults to "postcode_data".
 
-          Positional filters:
-            longitude: longitude coordinate of the center of a box.
-            lattitude: lattitude coordinate of the center of a box.
-            box_size: create a filter for transactions using a square of size box_size with centre in (longitude, lattitude). 
-                      Defaults to 0.01. Which corresponds to ~1.1km.
+        Positional filters arg:
+          longitude: longitude coordinate of the center of a box.
+          lattitude: lattitude coordinate of the center of a box.
+          box_size: create a filter for transactions using a square of size box_size with centre in (longitude, lattitude). 
+                    Defaults to 0.01. Which corresponds to ~1.1km.
 
-          Additional filters:
-            date_from_incl: lower bound filter on date. Expected format is yyyy/mm/dd.
-            date_from_excl: upper bound filter on date. Expected format is yyyy/mm/dd.
-            town_city,
-            postcode,
-            only_live_postcodes: there are two values for postcode status - live and terminated.
-                                True will filter away terminated status. Default False.
-            ppd_category_type: Defaults to 'A'.
+        Additional filters args:
+          date_from_incl: lower bound filter on date. Expected format is yyyy/mm/dd.
+          date_from_excl: upper bound filter on date. Expected format is yyyy/mm/dd.
+          town_city,
+          postcode,
+          only_live_postcodes: there are two values for postcode status - live and terminated.
+                              True will filter away terminated status. Default False.
+          ppd_category_type: Defaults to 'A'.
 
-          Other:
-            columns_to_select: Columns to select in addition to postcode. 
-                              Defaults to [price, date_of_transfer, property_type, tenure_type, new_build_flag, country, county,
-                                          town_city, district, longitude, lattitude, postcode_status, ppd_category_type]
+        Other args:
+          columns_to_select: Columns to select in addition to postcode. 
+                            Defaults to [price, date_of_transfer, property_type, tenure_type, new_build_flag, country, county,
+                                        town_city, district, longitude, lattitude, postcode_status, ppd_category_type]
 
       Returns:
           DataFrame with corresponding data
