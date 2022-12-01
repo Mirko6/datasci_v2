@@ -15,7 +15,6 @@ from shapely.geometry import Point
 from statsmodels.genmod.generalized_linear_model import GLMResultsWrapper
 import statsmodels.api as sm
 from datetime import date
-#pd.options.mode.chained_assignment = None
 
 """# Here are some of the imports we might expect 
 import sklearn.model_selection  as ms
@@ -66,7 +65,11 @@ def predict_price(
       d_within = prediction_features["num_objects"]["d_within"]
       tags = prediction_features["num_objects"]["tags"]
       pois = ox.geometries_from_bbox(*get_bbox_from_df(df), tags)
+      
+      pd.options.mode.chained_assignment = None # surpres warning
       df.loc[:, 'num_objects'] = df.apply(lambda row: num_objects_within_d(pois['geometry'], d_within, Point(row['longitude'], row['lattitude'])), axis = 1)
+      pd.options.mode.chained_assignment = 'warn' # put warning back again
+      
       df_design_GLM['num_objects'] = df['num_objects']
       df_values_for_prediction['num_objects'] = num_objects_within_d(pois['geometry'], d_within, Point(float(longitude), float(lattitude)))
     if not prediction_features.get("longitude"):
