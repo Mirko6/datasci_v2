@@ -46,7 +46,8 @@ def predict_price(
       df_design_GLM['constant'] = 1
       df_values_for_prediction['constant'] = 1
     if prediction_features.get("new_build_flag") is not None:
-      df_design_GLM['new_build_flag'] = (df['new_build_flag'] == 'N').astype(int)
+      NEWLY_BUILD_VALUE = 'Y'
+      df_design_GLM['new_build_flag'] = (df['new_build_flag'] == NEWLY_BUILD_VALUE).astype(int)
       df_values_for_prediction['new_build_flag'] = int(prediction_features.get("new_build_flag"))
     if prediction_features.get("days_since"):
       if prediction_features.get("days_since") == "first_day":

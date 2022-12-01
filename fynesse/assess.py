@@ -46,3 +46,10 @@ def filter_price_outliers(df: pd.DataFrame, fraction_to_remove = 0.1):
   ]
   print(f"Number of houses without price outliers: {len(df_filtered)}, price range: {df_filtered['price'].min()} - {df_filtered['price'].max()}")
   return df_filtered
+
+
+def occurence_of_values_in_column(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
+  counts = df[column_name].groupby(by=df[column_name]).count().sort_values(ascending=False)
+  df_counts = pd.DataFrame({"counts": counts})
+  df_counts["percentage"] = df_counts["counts"].apply(lambda c: round(100*c/df_counts['counts'].sum(), 1))
+  return df_counts
