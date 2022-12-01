@@ -4,7 +4,6 @@ from .config import *
 from . import access_db
 import pandas as pd
 from datetime import date, timedelta
-import access_db
 
 
 def get_training_data(
