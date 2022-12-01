@@ -39,7 +39,7 @@ def predict_price(
     longitude: str,
     predict_date: date,
     prediction_features,
-  ) -> Tuple[gpd.GeoDataFrame, float, GLMResultsWrapper, pd.DataFrame]:
+  ) -> Tuple[Optional[gpd.GeoDataFrame], float, GLMResultsWrapper, pd.DataFrame]:
     pois = None
     df_design_GLM = df[['longitude', 'lattitude']].astype({'longitude': float, 'lattitude': float})
     df_values_for_prediction = pd.DataFrame(data={'longitude': [float(longitude)], 'lattitude': [float(lattitude)]})
@@ -65,7 +65,7 @@ def predict_price(
     if prediction_features.get("num_objects"):
       d_within = prediction_features["num_objects"]["d_within"]
       tags = prediction_features["num_objects"]["tags"]
-      pois = ox.geometries_from_bbox(get_bbox_from_df(df), tags)
+      pois = ox.geometries_from_bbox(*get_bbox_from_df(df), tags)
       df.loc[:, 'num_objects'] = df.apply(lambda row: num_objects_within_d(pois['geometry'], d_within, Point(row['longitude'], row['lattitude'])), axis = 1)
       df_design_GLM['num_objects'] = df['num_objects']
       df_values_for_prediction['num_objects'] = num_objects_within_d(pois['geometry'], d_within, Point(float(longitude), float(lattitude)))
