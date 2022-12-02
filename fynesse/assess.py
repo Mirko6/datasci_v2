@@ -3,6 +3,7 @@ from .config import *
 
 from . import access_db
 import pandas as pd
+import geopandas as gpd
 from datetime import date, timedelta
 from matplotlib.axes import Axes
 import osmnx as ox
@@ -59,8 +60,8 @@ def occurence_of_values_in_column(df: pd.DataFrame, column_name: str) -> pd.Data
                     Containing columns counts and percentage.
   """  
   counts = df[column_name].groupby(by=df[column_name]).count().sort_values(ascending=False)
-  df_counts = pd.DataFrame({"counts": counts})
-  df_counts["percentage"] = df_counts["counts"].apply(lambda c: round(100*c/df_counts['counts'].sum(), 1))
+  df_counts = pd.DataFrame({"count": counts})
+  df_counts["percentage"] = df_counts["count"].apply(lambda c: round(100*c/df_counts['count'].sum(), 1))
   return df_counts
 
 
@@ -100,3 +101,14 @@ def plot_pois(
     pois.plot(ax=ax, color=color, alpha=0.7, markersize=10)
   else:
     print(f"There are no points of interest for tags {tags} in the given bbox: {bbox}")
+
+
+def tags_in_pois_occurences(pois: gpd.GeoDataFrame, tags: Dict[str, str]) -> None:
+  """Given points of interests and tags, prints out the numerical information about the occurences of tags"""  
+  for key in tags.keys():
+    print()
+    if key in pois.columns:
+      print(f"For tag: {key}, we have the following values in pois:")
+      print(occurence_of_values_in_column(pois, key))
+    else:
+      print(f"For tag: {key}, we have no pois")
