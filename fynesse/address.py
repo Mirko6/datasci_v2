@@ -56,7 +56,6 @@ def get_data_for_prediction(
     }
 
 
-
 def predict_price(
     df: pd.DataFrame,
     lattitude: str,
