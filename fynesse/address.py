@@ -15,22 +15,47 @@ from shapely.geometry import Point
 from statsmodels.genmod.generalized_linear_model import GLMResultsWrapper
 import statsmodels.api as sm
 from datetime import date
+from . import access_db
+from . import assess
 
-"""# Here are some of the imports we might expect 
-import sklearn.model_selection  as ms
-import sklearn.linear_model as lm
-import sklearn.svm as svm
-import sklearn.naive_bayes as naive_bayes
-import sklearn.tree as tree
 
-import GPy
-import torch
-import tensorflow as tf
+def get_data_for_prediction(
+    lattitude: str,
+    longitude: str,
+    predict_date_str: str, #yyyy/mm/dd, e.g. 2025/11/05
+    DB: access_db.DB,
+    property_type: Optional[str] = None,
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
+    days_to_consider: int = 360,
+    box_size: float = 0.02,
+    minimum_number_of_data_points: int = 10,
+) -> Tuple[pd.DataFrame, Dict[str, any]]:
+  """Given specification of prediction object returns the training data
 
-# Or if it's a statistical analysis
-import scipy.stats"""
+  Raises:
+      Exception: in case there is too little data
 
-"""Address a particular question that arises from the data"""
+  Returns:
+      Tuple[pd.DataFrame, Dict[str, any]]:
+          dataframe with all of the training data
+          dictionary with values for prediction
+  """
+  year, month, day = (int(i) for i in predict_date_str.split("/"))
+  predict_date = date(year, month, day)
+  df_all = assess.get_training_data(DB, lattitude, longitude, predict_date, property_type = property_type, days_to_consider = days_to_consider, box_size = box_size, date_from = date_from, date_to = date_to)
+  if len(df_all) < minimum_number_of_data_points:
+    raise Exception(f"we got {len(df_all)} number of data points which is less than the required minimum number: {minimum_number_of_data_points}")
+  df_filtered = assess.filter_price_outliers(df_all, fraction_to_remove=0.05)
+
+  return df_all, {
+      "df": df_filtered,
+      "lattitude": lattitude,
+      "longitude": longitude,
+      "predict_date": predict_date
+    }
+
+
 
 def predict_price(
     df: pd.DataFrame,
@@ -39,6 +64,44 @@ def predict_price(
     predict_date: date,
     prediction_features: Dict[str, any],
   ) -> Tuple[Optional[gpd.GeoDataFrame], float, GLMResultsWrapper, pd.DataFrame]:
+    """Given the training set and specification of prediciton object, returns price prediction together with
+    other computation results.
+
+    Args:
+        df (pd.DataFrame): training dataset
+        lattitude (str): lattitude of prediction object
+        longitude (str): longitude of prediciton object
+        predict_date (date): predict date of our interest
+        prediction_features (Dict[str, any]): dictionary specifying what features to use.
+            This is the supported structure:
+            None indicates the feature is not being used. 
+            {
+                "constant": None,
+                    - True: use a constant vector feature
+                "days_since": None, 
+                    - 'first_day': there will be a feature with the number of days since the date of the first transaction in the training data
+                    - date_string: in the format yyyy/mm/dd - there will be a feature with the number of days since the given date
+                "lattitude": None,
+                    - True: use lattitude as a prediction feature
+                "longitude": None,
+                    - True: use longitude as a prediciton feature
+                "new_build_flag": None, 
+                    - True: use new_build_flag as a prediction feature and predict a newbuild property
+                    - False: use new_build_flag as a prediction feature and predict not a newbuild property
+                "num_objects": None,
+                    - dictionary with the following structure:
+                    {
+                      'd_within': distance  # (float): the radius in which to look for
+                      'tags': tag_dict      # tag_dict specifying tags for osmnx library as found here https://wiki.openstreetmap.org/wiki/Map_features
+                    }
+                    # this will create a feature with the number of objects defined by the given tags within radius d_within
+            }
+                                              
+
+    Returns:
+        Tuple[Optional[gpd.GeoDataFrame], float, GLMResultsWrapper, pd.DataFrame]:
+              points of interest, prediction results, GLM result, values for prediciton
+    """  
     
     # Start  by building the desing matrix - df_design_matrix, and the values for our prediciton - df_values_for_prediction
     df_design_matrix = df[['longitude', 'lattitude']].astype({'longitude': float, 'lattitude': float})
@@ -73,7 +136,7 @@ def predict_price(
     if prediction_features.get("num_objects"):
       d_within = prediction_features["num_objects"]["d_within"]
       tags = prediction_features["num_objects"]["tags"]
-      pois = ox.geometries_from_bbox(*get_bbox_from_df(df), tags)
+      pois = ox.geometries_from_bbox(*get_bbox_from_df(df, delta_coordinates=d_within), tags)
       
       pd.options.mode.chained_assignment = None # surpres warning
       df.loc[:, 'num_objects'] = df.apply(lambda row: num_objects_within_d(pois['geometry'], d_within, Point(row['longitude'], row['lattitude'])), axis = 1)
@@ -118,6 +181,10 @@ def get_bbox_from_df(df, delta_coordinates = 0.001) -> Tuple[float, float, float
 #brutforce implemntation - might make it faster if wanted, but since there is usually small number of geometries it is okay
 def num_objects_within_d(object_geometries, d_within: float, point: Point):
   return sum(object_geometries.apply(lambda geometry: geometry.distance(point) < d_within ))
+
+
+
+## PLOTTING SECTION
 
 
 def _round_to_base(x, base):
