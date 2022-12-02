@@ -38,8 +38,7 @@ def get_data_for_prediction(
 
   Returns:
       Tuple[pd.DataFrame, Dict[str, any]]:
-          dataframe with all of the training data
-          dictionary with values for prediction
+          dataframe with the training data and a dictionary with values for prediction
   """
   year, month, day = (int(i) for i in predict_date_str.split("/"))
   predict_date = date(year, month, day)
@@ -71,8 +70,9 @@ def predict_price(
         lattitude (str): lattitude of prediction object
         longitude (str): longitude of prediciton object
         predict_date (date): predict date of our interest
+        
         prediction_features (Dict[str, any]): dictionary specifying what features to use.
-            This is the supported structure:
+            This is the supported structure for prediction_features:
             None indicates the feature is not being used. 
             {
                 "constant": None,
@@ -119,15 +119,15 @@ def predict_price(
     
     if prediction_features.get("days_since"):
       if prediction_features.get("days_since") == "first_day":
-        df.loc[:, 'ordinal_date_value'] = df['date_of_transfer'].apply(lambda d: d.toordinal())
-        df.loc[:, 'days_since_first_day'] = df['ordinal_date_value'] - df['ordinal_date_value'].min()
+        df.loc[:, 'ordinal_date_value'] = df.loc[:, 'date_of_transfer'].apply(lambda d: d.toordinal())
+        df.loc[:, 'days_since_first_day'] = df.loc[:, 'ordinal_date_value'] - df['ordinal_date_value'].min()
         df_design_matrix['days_since_first_day'] = df['days_since_first_day']
         df_values_for_prediction['days_since_first_day'] = (predict_date - df['date_of_transfer'].min()).days
       else:
         year, month, day = (int(i) for i in prediction_features.get("days_since").split("/"))
         date_since = date(year, month, day)
-        df.loc[:, 'ordinal_date_value'] = df['date_of_transfer'].apply(lambda d: d.toordinal())
-        df.loc[:, 'days_since_date'] = df['ordinal_date_value'] - date_since.toordinal()
+        df.loc[:, 'ordinal_date_value'] = df.loc[:, 'date_of_transfer'].apply(lambda d: d.toordinal())
+        df.loc[:, 'days_since_date'] = df.loc[:, 'ordinal_date_value'] - date_since.toordinal()
         df_design_matrix['days_since_date'] = df['days_since_date']
         df_values_for_prediction['days_since_date'] = (predict_date - date_since).days    
     
@@ -168,7 +168,7 @@ def fetch_graph_from_df(df: pd.DataFrame) -> networkx.MultiDiGraph:
   return ox.graph_from_bbox(df['lattitude'].min(), df['lattitude'].max(), df['longitude'].min(),  df['longitude'].max())
 
 
-def get_bbox_from_df(df, delta_coordinates = 0.001) -> Tuple[float, float, float, float]:
+def get_bbox_from_df(df: pd.DataFrame, delta_coordinates = 0.001) -> Tuple[float, float, float, float]:
   return (
     float(df['lattitude'].min()) - delta_coordinates, #north
     float(df['lattitude'].max()) + delta_coordinates, #south
@@ -178,7 +178,7 @@ def get_bbox_from_df(df, delta_coordinates = 0.001) -> Tuple[float, float, float
 
 
 #brutforce implemntation - might make it faster if wanted, but since there is usually small number of geometries it is okay
-def num_objects_within_d(object_geometries, d_within: float, point: Point):
+def num_objects_within_d(object_geometries: pd.Series, d_within: float, point: Point):
   return sum(object_geometries.apply(lambda geometry: geometry.distance(point) < d_within ))
 
 
