@@ -1,9 +1,11 @@
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 from .config import *
 
 from . import access_db
 import pandas as pd
 from datetime import date, timedelta
+from matplotlib.axes import Axes
+import osmnx as ox
 
 
 def get_training_data(
@@ -74,4 +76,27 @@ def get_bbox(longitude: str, lattitude: str, box_size: float) -> Tuple[float, fl
   south = lattitude - box_size / 2
   east = longitude + box_size / 2
   west = longitude - box_size / 2
-  return north, south, east, west 
+  return north, south, east, west
+
+
+def plot_edges(bbox: Tuple[float, float, float, float], ax: Axes) -> None:
+  """Fetches and plots edges within bbox on the axis ax"""  
+  graph = ox.graph_from_bbox(*bbox)
+  _nodes, edges = ox.graph_to_gdfs(graph)
+  ax.set_xlabel("longitude")
+  ax.set_ylabel("latitude")
+  edges.plot(ax=ax, linewidth=1, edgecolor="dimgray")
+
+
+def plot_pois(
+  bbox: Tuple[float, float, float, float],
+  ax: Axes,
+  tags: Dict[str, str],
+  color: Optional[str] = None
+  ) -> None:
+  """Fetches and plots points of interests defined by the tags within bbox on the axis ax"""  
+  pois = ox.geometries_from_bbox(*bbox, tags)
+  if len(pois) > 0:
+    pois.plot(ax=ax, color=color, alpha=0.7, markersize=10)
+  else:
+    print(f"There are no points of interest for tags {tags} in the given bbox: {bbox}")
