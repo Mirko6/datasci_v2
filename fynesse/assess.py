@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 from .config import *
 
 from . import access_db
@@ -49,7 +49,29 @@ def filter_price_outliers(df: pd.DataFrame, fraction_to_remove = 0.1):
 
 
 def occurence_of_values_in_column(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
+  """Given a dataframe and a name of one of its columns, outputs an overview dataframe
+  showing the counts and percentages of value occurences of the given column.
+
+  Returns:
+      pd.DataFrame: Indexed by the set of values in the column of interest.
+                    Containing columns counts and percentage.
+  """  
   counts = df[column_name].groupby(by=df[column_name]).count().sort_values(ascending=False)
   df_counts = pd.DataFrame({"counts": counts})
   df_counts["percentage"] = df_counts["counts"].apply(lambda c: round(100*c/df_counts['counts'].sum(), 1))
   return df_counts
+
+
+def get_bbox(longitude: str, lattitude: str, box_size: float) -> Tuple[float, float, float, float]:
+  """given coordinates of a point and a box_size, returns bounds of the
+  square of size box_size centered at that point with
+
+  Returns:
+      Tuple[float, float, float, float]: north, south, east, west coordinate bounds respectively
+  """  
+  longitude, lattitude = float(longitude), float(lattitude)
+  north = lattitude + box_size / 2
+  south = lattitude - box_size / 2
+  east = longitude + box_size / 2
+  west = longitude - box_size / 2
+  return north, south, east, west 
