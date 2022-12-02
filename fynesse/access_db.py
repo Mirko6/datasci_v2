@@ -124,7 +124,7 @@ class DB:
       ppd_category_type: Optional[str] = 'A',
       columns_to_select: List[str] = [
         "price", "date_of_transfer", "property_type", "tenure_type", "new_build_flag", "country", "county", "town_city", "district", "longitude", "lattitude", "status", "ppd_category_type"
-      ]
+      ],
     ) -> pd.DataFrame:
       """
       Select Join and Select priced paid data table with postcode data allowing for many filters
@@ -179,7 +179,9 @@ class DB:
       if ppd_category_type is not None:
         filters.append(f"ppd_category_type = '{ppd_category_type}'")
 
-      columns_to_select.append(f"{table_name_priced_paid_data}.postcode")
+      if f"{table_name_priced_paid_data}.postcode" not in columns_to_select:
+        columns_to_select.append(f"{table_name_priced_paid_data}.postcode")
+      
       query = f"""
         SELECT {', '.join(columns_to_select)}
           FROM {table_name_priced_paid_data}

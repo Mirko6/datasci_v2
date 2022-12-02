@@ -118,6 +118,7 @@ def predict_price(
       df_values_for_prediction['new_build_flag'] = int(prediction_features.get("new_build_flag"))
     
     if prediction_features.get("days_since"):
+      pd.options.mode.chained_assignment = None # surpres warning
       if prediction_features.get("days_since") == "first_day":
         df.loc[:, 'ordinal_date_value'] = df.loc[:, 'date_of_transfer'].apply(lambda d: d.toordinal())
         df.loc[:, 'days_since_first_day'] = df.loc[:, 'ordinal_date_value'] - df['ordinal_date_value'].min()
@@ -129,7 +130,8 @@ def predict_price(
         df.loc[:, 'ordinal_date_value'] = df.loc[:, 'date_of_transfer'].apply(lambda d: d.toordinal())
         df.loc[:, 'days_since_date'] = df.loc[:, 'ordinal_date_value'] - date_since.toordinal()
         df_design_matrix['days_since_date'] = df['days_since_date']
-        df_values_for_prediction['days_since_date'] = (predict_date - date_since).days    
+        df_values_for_prediction['days_since_date'] = (predict_date - date_since).days
+      pd.options.mode.chained_assignment = 'warn' # put warning back again   
     
     pois = None
     if prediction_features.get("num_objects"):
