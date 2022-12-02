@@ -22,6 +22,7 @@ def get_training_data(
   days_to_consider: int = 365, #used when date_from is None
   box_size: float = 0.02
   ) -> pd.DataFrame:
+  """Given parameters for prediction returns a training DataFrame"""  
   if date_to is None:
     date_max_from_data = DB.custom_select_query("SELECT max(date_of_transfer) as max_date FROM pp_data")['max_date'][0]
     date_to = min(date_max_from_data + timedelta(days=1), date_prediction)
@@ -40,7 +41,11 @@ def get_training_data(
   )
   return df_all
 
-def filter_price_outliers(df: pd.DataFrame, fraction_to_remove = 0.1):
+
+def filter_price_outliers(df: pd.DataFrame, fraction_to_remove = 0.1) -> pd.DataFrame:
+  """Creates and returns a new DataFrame without price outliers
+  We might wish to remove price outliers to make our plots nicer, and not to misguide our prediction models.
+  """  
   print(f"Number of houses before filtering: {len(df)}, price range: {df['price'].min()} - {df['price'].max()}")
   one_sided_outliers = fraction_to_remove / 2
   low_price = df['price'].quantile(one_sided_outliers, interpolation='nearest')

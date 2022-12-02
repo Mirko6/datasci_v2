@@ -40,7 +40,13 @@ def create_index_using_hash_if_not_exists(conn: Connection, table_name: str, ind
 
 # priced paid data functions
 
-def get_data(year: int, part: int):
+def get_data(year: int, part: int) -> pd.DataFrame:
+  """Given year and a part returns the corresponding priced paid dataset.
+
+  Args:
+      year (int): supported years are from 1995 to 2021 inclusive (written in 2022)
+      part (int): supported parts are 1 or 2
+  """  
   url = f"http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{year}-part{part}.csv"
   df = pd.read_csv(url, header=None)
   return df
@@ -53,7 +59,8 @@ def create_table_and_upload_everything_for_priced_paid_data(
   sample_portion = 0.01,
   first_year: int = FIRST_YEAR_PP_DATA,
   current_year: int = CURRENT_YEAR,
-):
+) -> None:
+  """Drops existing tables (table_name and sample_table_name), creates new tables and uploads priced paid data."""  
   drop_and_create_table_for_priced_paid_data(conn, table_name)
   drop_and_create_table_for_priced_paid_data(conn, sample_table_name)
 
@@ -68,7 +75,8 @@ def upload_datasets(
     year_from: int, 
     year_to_excl: int, 
     sample_portion = 0.01
-  ):
+  ) -> None:
+    """Fetches and uploads priced paid data"""    
     num_fetched_rows = []
     num_uploaded_rows = []
     for year in range(year_from, year_to_excl):
@@ -182,5 +190,3 @@ def fetch_and_upload_postcode_data(conn: Connection, table_name = 'postcode_data
   remove("licence.txt")
   upload_csv_to_aws(conn, table_name, 'open_postcode_geo.csv')
   remove("open_postcode_geo.csv")
-
-
