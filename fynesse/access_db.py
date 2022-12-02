@@ -1,33 +1,8 @@
+# This file accesses the database which already has all the data
+
 from typing import List, Optional
 from .config import *
 from pymysql.connections import Connection
-
-"""These are the types of import we might expect in this file
-import httplib2
-import oauth2
-import tables
-import mongodb
-import sqlite"""
-
-
-PRICE_PAID_DATA_USEFUL_COLUMNS = [
-  "price", "date_of_transfer", "postcode", "property_type"
-]
-POSTCODE_DATA_USEFUL_COLUMNS = [
-  "postcode", "lattitude", "longitude", "status"
-]
-PRICE_POSTCODE_USEFUL_COLUMNS = list(set(PRICE_PAID_DATA_USEFUL_COLUMNS + POSTCODE_DATA_USEFUL_COLUMNS))
-
-
-# This file accesses the data
-
-"""Place commands in this file to access the data electronically. Don't remove any missing values, or deal with outliers. Make sure you have legalities correct, both intellectual property and personal data privacy rights. Beyond the legal side also think about the ethical issues around this data. """
-
-def data():
-    """Read the data from the web or local file, returning structured format such as a data frame"""
-    raise NotImplementedError
-
-
 from pymysql import connect
 import pandas as pd
 
@@ -73,8 +48,7 @@ class DB:
     the result as a DataFrame
 
   select_top(table_name, n):
-    Select top n elements from table table_name and return
-    the result as a DataFrame
+    Select top n elements from table table_name and return the result as a DataFrame
 
   select_priced_paid_data_joined_on_postcode(**kwargs):
     Join and Select priced paid data table with postcode data allowing for many filters
@@ -89,6 +63,7 @@ class DB:
 
 
   def custom_query(self, query: str):
+    """execute arbitrary SQL syntax query and return the result"""    
     cur = self.conn.cursor()
     cur.execute(query)
     result = cur.fetchall()
@@ -96,6 +71,7 @@ class DB:
 
 
   def custom_select_query(self, query: str) -> pd.DataFrame:
+    """"execute arbitrary SELECT SQL syntax query and return the result as a DataFrame"""
     cur = self.conn.cursor()
     cur.execute(query)
     rows = cur.fetchall()
@@ -104,6 +80,7 @@ class DB:
 
 
   def select_top(self, table_name: str,  n: int = 5) -> pd.DataFrame:
+    """"Select top n elements from table table_name and return the result as a DataFrame"""
     query = f'SELECT * FROM {table_name} LIMIT {n}'
     return self.custom_select_query(query)
 

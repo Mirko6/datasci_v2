@@ -1,3 +1,5 @@
+# this files provides function for assessing the data as well a function for getting a training dataset
+
 from typing import Dict, Optional, Tuple
 from .config import *
 
@@ -19,7 +21,7 @@ def get_training_data(
   property_type: Optional[str] = None,
   days_to_consider: int = 365, #used when date_from is None
   box_size: float = 0.02
-  ):
+  ) -> pd.DataFrame:
   if date_to is None:
     date_max_from_data = DB.custom_select_query("SELECT max(date_of_transfer) as max_date FROM pp_data")['max_date'][0]
     date_to = min(date_max_from_data + timedelta(days=1), date_prediction)

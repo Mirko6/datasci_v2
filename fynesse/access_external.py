@@ -1,3 +1,5 @@
+#this file provides functions for fetching and uploading the priced paid data and the postcode data to the database
+
 from typing import Optional
 from .config import *
 from pymysql.connections import Connection
@@ -12,6 +14,7 @@ FIRST_YEAR_PP_DATA = 1995
 CURRENT_YEAR = 2022
 
 # general functions
+
 def upload_csv_to_aws(conn: Connection, table_name: str, file_name: str):
   cur = conn.cursor()
   query = f"""
@@ -35,7 +38,8 @@ def create_index_using_hash_if_not_exists(conn: Connection, table_name: str, ind
   cur.execute(query)
 
 
-# priced paid data
+# priced paid data functions
+
 def get_data(year: int, part: int):
   url = f"http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{year}-part{part}.csv"
   df = pd.read_csv(url, header=None)
@@ -127,14 +131,14 @@ def drop_and_create_table_for_priced_paid_data(conn: Connection, table_name: str
       PRIMARY KEY (`db_id`)
     ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
   """
-  #INDEX (`postcode`) USING HASH,
-  #INDEX (`date_of_transfer`) USING HASH
 
   cur.execute(query1)
   cur.execute(query2)
 
 
-# postcode data
+# postcode data functions
+
+
 def drop_and_create_table_for_postcode_data(conn: Connection, table_name: str = "postcode_data"):
   cur = conn.cursor()
   query1 = f"DROP TABLE IF EXISTS `{table_name}`"
@@ -161,7 +165,6 @@ def drop_and_create_table_for_postcode_data(conn: Connection, table_name: str = 
         PRIMARY KEY (`db_id`)
     ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
   """
-  #INDEX (`postcode`) USING HASH
 
   cur.execute(query1)
   cur.execute(query2)

@@ -179,8 +179,8 @@ def get_bbox_from_df(df: pd.DataFrame, delta_coordinates = 0.001) -> Tuple[float
   )
 
 
-#brutforce implemntation - might make it faster if wanted, but since there is usually small number of geometries it is okay
-def num_objects_within_d(object_geometries: pd.Series, d_within: float, point: Point):
+#brutforce implemntation - but since there is usually a small number of geometries it is fast enough
+def num_objects_within_d(object_geometries: pd.Series, d_within: float, point: Point) -> int:
   return sum(object_geometries.apply(lambda geometry: geometry.distance(point) < d_within ))
 
 
@@ -188,7 +188,8 @@ def num_objects_within_d(object_geometries: pd.Series, d_within: float, point: P
 ## PLOTTING SECTION
 
 
-def _round_to_base(x, base):
+def _round_to_base(x: float, base: float) -> float:
+  """rounds number x to nearest number divisible by base"""
   return base * round(x/base)
 
 
