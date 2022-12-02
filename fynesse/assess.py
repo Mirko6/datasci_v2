@@ -104,7 +104,7 @@ def plot_pois(
 
 
 def tags_in_pois_occurences(pois: gpd.GeoDataFrame, tags: Dict[str, str]) -> None:
-  """Given points of interests and tags, prints out the numerical information about the occurences of tags"""  
+  """Given points of interests and tags, prints out the numerical information about the occurences of the tags"""  
   for key in tags.keys():
     print()
     if key in pois.columns:

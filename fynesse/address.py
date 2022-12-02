@@ -1,6 +1,6 @@
 # This file contains code for suporting addressing questions in the data
 
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 from .config import *
 
 import math
@@ -37,31 +37,39 @@ def predict_price(
     lattitude: str,
     longitude: str,
     predict_date: date,
-    prediction_features,
+    prediction_features: Dict[str, any],
   ) -> Tuple[Optional[gpd.GeoDataFrame], float, GLMResultsWrapper, pd.DataFrame]:
-    pois = None
-    df_design_GLM = df[['longitude', 'lattitude']].astype({'longitude': float, 'lattitude': float})
+    
+    # Start  by building the desing matrix - df_design_matrix, and the values for our prediciton - df_values_for_prediction
+    df_design_matrix = df[['longitude', 'lattitude']].astype({'longitude': float, 'lattitude': float})
     df_values_for_prediction = pd.DataFrame(data={'longitude': [float(longitude)], 'lattitude': [float(lattitude)]})
+    
+    # Add new features based on prediction_features dictionary
+
     if prediction_features.get("constant"):
-      df_design_GLM['constant'] = 1
+      df_design_matrix['constant'] = 1
       df_values_for_prediction['constant'] = 1
+    
     if prediction_features.get("new_build_flag") is not None:
       NEWLY_BUILD_VALUE = 'Y'
-      df_design_GLM['new_build_flag'] = (df['new_build_flag'] == NEWLY_BUILD_VALUE).astype(int)
+      df_design_matrix['new_build_flag'] = (df['new_build_flag'] == NEWLY_BUILD_VALUE).astype(int)
       df_values_for_prediction['new_build_flag'] = int(prediction_features.get("new_build_flag"))
+    
     if prediction_features.get("days_since"):
       if prediction_features.get("days_since") == "first_day":
         df.loc[:, 'ordinal_date_value'] = df['date_of_transfer'].apply(lambda d: d.toordinal())
         df.loc[:, 'days_since_first_day'] = df['ordinal_date_value'] - df['ordinal_date_value'].min()
-        df_design_GLM['days_since_first_day'] = df['days_since_first_day']
+        df_design_matrix['days_since_first_day'] = df['days_since_first_day']
         df_values_for_prediction['days_since_first_day'] = (predict_date - df['date_of_transfer'].min()).days
       else:
         year, month, day = (int(i) for i in prediction_features.get("days_since").split("/"))
         date_since = date(year, month, day)
         df.loc[:, 'ordinal_date_value'] = df['date_of_transfer'].apply(lambda d: d.toordinal())
         df.loc[:, 'days_since_date'] = df['ordinal_date_value'] - date_since.toordinal()
-        df_design_GLM['days_since_date'] = df['days_since_date']
+        df_design_matrix['days_since_date'] = df['days_since_date']
         df_values_for_prediction['days_since_date'] = (predict_date - date_since).days    
+    
+    pois = None
     if prediction_features.get("num_objects"):
       d_within = prediction_features["num_objects"]["d_within"]
       tags = prediction_features["num_objects"]["tags"]
@@ -71,20 +79,22 @@ def predict_price(
       df.loc[:, 'num_objects'] = df.apply(lambda row: num_objects_within_d(pois['geometry'], d_within, Point(row['longitude'], row['lattitude'])), axis = 1)
       pd.options.mode.chained_assignment = 'warn' # put warning back again
       
-      df_design_GLM['num_objects'] = df['num_objects']
+      df_design_matrix['num_objects'] = df['num_objects']
       df_values_for_prediction['num_objects'] = num_objects_within_d(pois['geometry'], d_within, Point(float(longitude), float(lattitude)))
+    
+    # in case longitude and/or lattitude are not in prediction_features, 
+    # then remove them from both the desing matrix and the values for prediciton
     if not prediction_features.get("longitude"):
-      df_design_GLM.drop(columns='longitude', inplace=True)
+      df_design_matrix.drop(columns='longitude', inplace=True)
       df_values_for_prediction.drop(columns='longitude', inplace=True)
     if not prediction_features.get("lattitude"):
-      df_design_GLM.drop(columns = 'lattitude', inplace=True)
+      df_design_matrix.drop(columns = 'lattitude', inplace=True)
       df_values_for_prediction.drop(columns='lattitude', inplace=True)
 
-    print(f"GLM uses the following features: {', '.join(df_design_GLM.columns)}")
-
-    glm = sm.GLM(df['price'], df_design_GLM)
+    # create and fit the model
+    print(f"GLM uses the following features: {', '.join(df_design_matrix.columns)}")
+    glm = sm.GLM(df['price'], df_design_matrix)
     glm_result = glm.fit()
-
     prediction = glm_result.predict(df_values_for_prediction)[0]
     std = math.sqrt(glm_result.scale)
     print(f"Price prediction: {round(prediction)}£, std: {round(std)}, 95% confidence interval: {round(prediction - 2*std)}£ - {round(prediction + 2*std)}£")
